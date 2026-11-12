@@ -49,10 +49,15 @@ label{display:block;color:var(--mu);font-size:12.5px;margin:4px 0}
 <p class="h" id="autoh" hidden>Pilih banyak foto sekaligus. Foto dibagi bergiliran ke 4 kotak dan tiap kotak jadi slideshow sendiri.</p>
 
 <h3>Bingkai</h3>
-<div class="row"><select id="shape"><option value="oval">Oval</option><option value="circle">Lingkaran</option><option value="arch">Lengkung</option><option value="rounded">Sudut membulat</option><option value="rect">Persegi</option></select>
-<select id="bstyle"><option value="scallop">Bergerigi</option><option value="solid">Polos</option><option value="double">Garis ganda</option><option value="none">Tanpa bingkai</option></select></div>
+<div class="row"><select id="shape"><option value="oval">Oval</option><option value="circle">Lingkaran</option><option value="arch">Lengkung</option><option value="rounded">Sudut membulat</option><option value="rect">Persegi</option><option value="hexa">Segi enam</option><option value="octa">Segi delapan</option><option value="diamond">Belah ketupat</option><option value="heart">Hati</option></select>
+<select id="bstyle"><option value="scallop">Bergerigi</option><option value="solid">Polos</option><option value="double">Garis ganda</option><option value="gold">Emas mengilap</option><option value="goldline">Garis emas ganda</option><option value="line">Garis tipis</option><option value="glow">Bercahaya</option><option value="dots">Titik-titik</option><option value="none">Tanpa bingkai</option></select></div>
 <div class="row"><label>Warna<input id="fc" type="color"></label><label>Tebal<input id="fw" type="range" min=".01" max=".1" step=".005"></label></div>
-<p class="h">Berlaku untuk kotak berbingkai di template Bingkai dan Trio.</p>
+<div class="row"><button id="frb">Frame PNG sendiri</button><button id="frx">Hapus</button></div>
+<label>Ukuran frame PNG<input id="fz" type="range" min="1" max="2" step=".01"></label>
+<input id="frf" type="file" accept="image/png,image/webp" hidden>
+<p class="h">Pakai PNG transparan (bagian tengahnya bolong), misalnya frame emas ornamen. Atur slider sampai lubangnya pas dengan foto, dan pilih bentuk bingkai yang mirip lubangnya. Saat PNG aktif, gaya tepi bawaan tidak dipakai.</p>
+<label><input id="fall" type="checkbox" style="width:auto;margin-right:6px">Bingkai di semua kotak</label>
+<p class="h">Tanpa dicentang, bingkai hanya muncul di template Bingkai dan Trio.</p>
 
 <h3>Teks</h3>
 <input id="title" placeholder="Judul">
@@ -75,7 +80,7 @@ label{display:block;color:var(--mu);font-size:12.5px;margin:4px 0}
 
 <h3>Animasi</h3>
 <select id="trans">
-<option value="slide">Geser samping</option><option value="up">Geser atas</option><option value="fade">Pudar</option><option value="zoom">Zoom</option><option value="wipe">Sapu</option>
+<option value="rand">Acak (otomatis)</option><option value="slide">Geser kiri</option><option value="left">Geser kanan</option><option value="down">Geser bawah</option><option value="zoomout">Zoom keluar</option><option value="wipev">Sapu vertikal</option><option value="up">Geser atas</option><option value="fade">Pudar</option><option value="zoom">Zoom</option><option value="wipe">Sapu</option>
 </select>
 <label>Lama tiap foto<input id="hold" type="range" min="1" max="6" step=".1"></label>
 <label>Lama transisi<input id="tdur" type="range" min=".2" max="1.5" step=".05"></label>
@@ -96,8 +101,8 @@ label{display:block;color:var(--mu);font-size:12.5px;margin:4px 0}
 
 <script>
 const $=i=>document.getElementById(i),cv=$('cv'),ctx=cv.getContext('2d');
-const S={lay:'oval',title:'SINTA & MUKHLAS',sub:'',foot:'PHOTO BY ANTARA KITA',font:'Cinzel',ts:1,bg:'#25402f',txt:'#f1ece0',ac:'#c9b27c',trans:'slide',hold:2.5,tdur:.7,stag:.4,shape:'oval',bstyle:'scallop',fc:'#ecebe6',fw:.06,dim:.25};
-let BG=null,cells=Array.from({length:9},()=>({imgs:[],zoom:1,ox:0,oy:0})),sel=0,exporting=false,t0=performance.now(),T=0,R=[],drag=null,spread=false;
+const S={lay:'oval',title:'SINTA & MUKHLAS',sub:'',foot:'PHOTO BY ANTARA KITA',font:'Cinzel',ts:1,bg:'#25402f',txt:'#f1ece0',ac:'#c9b27c',trans:'rand',hold:2.5,tdur:.7,stag:.4,shape:'oval',bstyle:'scallop',fc:'#ecebe6',fw:.06,dim:.25,fz:1.25};
+let BG=null,FR=null,cells=Array.from({length:9},()=>({imgs:[],zoom:1,ox:0,oy:0})),sel=0,exporting=false,t0=performance.now(),T=0,R=[],drag=null,spread=false;
 
 const grid=(c,r,x,y,W,H,g)=>{const cw=(W-g*(c-1))/c,ch=(H-g*(r-1))/r,o=[];for(let j=0;j<r;j++)for(let i=0;i<c;i++)o.push({x:x+i*(cw+g),y:y+j*(ch+g),w:cw,h:ch});return o};
 const std=(w,h)=>[['title',w/2,h*.045,.032],['foot',w/2,h*.965,.02]];
@@ -118,6 +123,7 @@ stair:['Tangga',(w,h)=>({c:[{x:w*.5,y:0,w:w*.5,h:h*.33},{x:w*.35,y:h*.33,w:w*.65
 };
 
 LAY.g4a=['Slideshow 4',LAY.g4[1]];
+const TR=['fade','slide','up','zoom','wipe','left','down','zoomout','wipev'];
 const ease=p=>p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
 
 function tx(k,x,y,f,mw){
@@ -132,6 +138,8 @@ function px(r,d){
   const{x,y,w,h}=r;let a=w/2,b=h/2;const cx=x+a,cy=y+b,s=S.shape;
   ctx.beginPath();if(s=='circle')a=b=Math.min(a,b);
   if(s=='oval'||s=='circle')ctx.ellipse(cx,cy,a+d,b+d,0,0,7);
+  else if(s=='heart'){for(let k=0;k<=64;k++){const q=k/64*6.2832,X=16*Math.sin(q)**3,Y=13*Math.cos(q)-5*Math.cos(2*q)-2*Math.cos(3*q)-Math.cos(4*q);ctx.lineTo(cx+(a+d)*X/16,cy-(b+d)*(Y+2.5)/14.5)}ctx.closePath()}
+  else if(s=='hexa'||s=='octa'||s=='diamond'){const n=s=='hexa'?6:s=='octa'?8:4,o=s=='hexa'?-1.5708:s=='octa'?.3927:0,k2=1/Math.cos(Math.PI/n);for(let k=0;k<n;k++){const q=o+k/n*6.2832;ctx.lineTo(cx+(a+d*k2)*Math.cos(q),cy+(b+d*k2)*Math.sin(q))}ctx.closePath()}
   else if(s=='arch'){ctx.moveTo(x-d,y+h+d);ctx.lineTo(x-d,y+a);ctx.arc(cx,y+a,a+d,Math.PI,0);ctx.lineTo(x+w+d,y+h+d);ctx.closePath()}
   else if(s=='rounded')ctx.roundRect(x-d,y-d,w+2*d,h+2*d,Math.min(w,h)*.14+d);
   else ctx.rect(x-d,y-d,w+2*d,h+2*d);
@@ -140,6 +148,17 @@ function frame(r){
   const st=S.bstyle;if(st=='none')return;const th=r.w*S.fw;
   ctx.save();ctx.fillStyle=ctx.strokeStyle=S.fc;
   if(st=='double'){ctx.lineWidth=Math.max(2,th*.12);px(r,th*.35);ctx.stroke();px(r,th);ctx.stroke()}
+  else if(st=='gold'||st=='goldline'){
+    const g=ctx.createLinearGradient(r.x,r.y,r.x+r.w,r.y+r.h);
+    [['0','#8a6a1f'],['.25','#f6e3a0'],['.5','#b58a2c'],['.75','#fff2bd'],['1','#8a6a1f']].forEach(a=>g.addColorStop(+a[0],a[1]));
+    ctx.fillStyle=ctx.strokeStyle=g;
+    if(st=='gold'){ctx.shadowColor='#0007';ctx.shadowBlur=30;ctx.shadowOffsetY=8;px(r,th);ctx.fill();ctx.shadowColor='transparent';
+      ctx.strokeStyle='rgba(80,50,5,.6)';ctx.lineWidth=Math.max(2,th*.07);px(r,th*.5);ctx.stroke();px(r,0);ctx.stroke()}
+    else{ctx.lineWidth=Math.max(3,th*.13);px(r,th*.4);ctx.stroke();px(r,th*.95);ctx.stroke()}
+  }
+  else if(st=='line'){ctx.lineWidth=Math.max(2,th*.1);px(r,th*.6);ctx.stroke()}
+  else if(st=='glow'){ctx.lineWidth=Math.max(3,th*.14);ctx.shadowColor=S.fc;ctx.shadowBlur=th*1.2;px(r,th*.6);ctx.stroke();ctx.stroke()}
+  else if(st=='dots'){ctx.lineCap='round';ctx.lineWidth=th*.35;ctx.setLineDash([0,th*.7]);px(r,th*.7);ctx.stroke()}
   else{
     ctx.shadowColor='#0007';ctx.shadowBlur=30;ctx.shadowOffsetY=8;px(r,th);ctx.fill();ctx.shadowColor='transparent';
     if(st=='scallop'){ctx.lineCap='round';ctx.lineWidth=th*.8;ctx.setLineDash([0,th*.75]);px(r,th);ctx.stroke()}
@@ -161,17 +180,21 @@ function cell(r,i,t){
     ctx.fillStyle='rgba(255,255,255,.07)';ctx.fillRect(r.x,r.y,r.w,r.h);
     if(!exporting){ctx.fillStyle=S.ac;ctx.font='300 '+r.w*.2+'px Jost,sans-serif';ctx.letterSpacing='0px';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('+',r.x+r.w/2,r.y+r.h/2)}
   }else{
-    const lt=t-i*S.stag;let idx=0,p=1,prev=0;
-    if(lt>0&&n>1){const slot=Math.floor(lt/S.hold);idx=slot%n;prev=(idx+n-1)%n;if(slot>0)p=Math.min(1,(lt-slot*S.hold)/S.tdur)}
+    const lt=t-i*S.stag;let idx=0,p=1,prev=0,sl=0;
+    if(lt>0&&n>1){const slot=Math.floor(lt/S.hold);sl=slot;idx=slot%n;prev=(idx+n-1)%n;if(slot>0)p=Math.min(1,(lt-slot*S.hold)/S.tdur)}
     const B=c.imgs[idx];
     if(p>=1)ph(B,r,c,0,0,1,1);
     else{
       const A=c.imgs[prev],e=ease(p),W=r.w,H=r.h;
-      switch(S.trans){
+      switch(S.trans=='rand'?TR[Math.floor(((Math.sin(i*12.9898+sl*78.233)*43758.5453)%1+1)%1*TR.length)]:S.trans){
         case'fade':ph(A,r,c,0,0,1,1);ph(B,r,c,0,0,1,e);break;
         case'slide':ph(A,r,c,-e*W,0,1,1);ph(B,r,c,(1-e)*W,0,1,1);break;
         case'up':ph(A,r,c,0,-e*H,1,1);ph(B,r,c,0,(1-e)*H,1,1);break;
         case'zoom':ph(A,r,c,0,0,1,1);ph(B,r,c,0,0,1.4-.4*e,e);break;
+        case'left':ph(A,r,c,e*W,0,1,1);ph(B,r,c,-(1-e)*W,0,1,1);break;
+        case'down':ph(A,r,c,0,e*H,1,1);ph(B,r,c,0,-(1-e)*H,1,1);break;
+        case'zoomout':ph(B,r,c,0,0,1,1);ph(A,r,c,0,0,1+.4*e,1-e);break;
+        case'wipev':ph(A,r,c,0,0,1,1);ctx.save();ctx.beginPath();ctx.rect(r.x,r.y,W,H*e);ctx.clip();ph(B,r,c,0,0,1,1);ctx.restore();break;
         case'wipe':ph(A,r,c,0,0,1,1);ctx.save();ctx.beginPath();ctx.rect(r.x,r.y,W*e,H);ctx.clip();ph(B,r,c,0,0,1,1);ctx.restore();break;
       }
     }
@@ -185,7 +208,7 @@ function draw(t){
   const g=ctx.createRadialGradient(w/2,h*.4,0,w/2,h*.4,Math.max(w,h)*.8);
   g.addColorStop(0,'rgba(255,255,255,.07)');g.addColorStop(1,'rgba(0,0,0,.25)');ctx.fillStyle=g;ctx.fillRect(0,0,w,h)}
   L.t.forEach(a=>tx(...a));
-  R.forEach((r,i)=>{if(r.f)frame(r);cell(r,i,t)});
+  R.forEach((r,i)=>{if(S.fall)r.f=1;if(r.f&&!FR)frame(r);cell(r,i,t);if(r.f&&FR){const z=S.fz,w=r.w*z,h=r.h*z;ctx.drawImage(FR,r.x+r.w/2-w/2,r.y+r.h/2-h/2,w,h)}});
   if(!exporting&&R[sel]){ctx.save();ctx.setLineDash([14,10]);ctx.lineWidth=4;ctx.strokeStyle=S.ac;path(R[sel]);ctx.stroke();ctx.restore()}
 }
 
@@ -204,8 +227,9 @@ $('size').onchange=e=>{
 };
 ['cw','ch'].forEach(k=>$(k).oninput=()=>{const a=+$('cw').value,b=+$('ch').value;if(a>=200&&b>=200&&a<=4000&&b<=4000)setSize(a,b)});
 ['title','sub','foot','font','trans','shape','bstyle'].forEach(k=>{const e=$(k);e.value=S[k];e.oninput=()=>S[k]=e.value});
-['ts','hold','tdur','stag','fw','dim'].forEach(k=>{const e=$(k);e.value=S[k];e.oninput=()=>S[k]=+e.value});
+['ts','hold','tdur','stag','fw','dim','fz'].forEach(k=>{const e=$(k);e.value=S[k];e.oninput=()=>S[k]=+e.value});
 ['bg','txt','ac','fc'].forEach(k=>{const e=$(k);e.value=S[k];e.oninput=()=>S[k]=e.value});
+$('fall').onchange=e=>S.fall=e.target.checked;
 $('zoom').oninput=e=>cells[sel].zoom=+e.target.value;
 
 const lays=$('lays');
@@ -250,6 +274,9 @@ $('file').onchange=async e=>{
 $('bgb').onclick=()=>$('bgf').click();
 $('bgf').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(f)BG=await loadImg(f)};
 $('bgx').onclick=()=>BG=null;
+$('frb').onclick=()=>$('frf').click();
+$('frf').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(f)FR=await loadImg(f)};
+$('frx').onclick=()=>FR=null;
 const dl=(b,n)=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000)};
 $('png').onclick=()=>{exporting=true;draw(T);cv.toBlob(b=>{dl(b,'kolase.png');exporting=false})};
 $('vid').onclick=()=>{
@@ -265,7 +292,6 @@ $('vid').onclick=()=>{
 
 ['Cinzel','Cormorant Garamond','Playfair Display','Montserrat','Jost'].forEach(f=>document.fonts.load('20px "'+f+'"'));
 ui();requestAnimationFrame(loop);
-
 </script>
 </body>
 </html>
