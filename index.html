@@ -113,7 +113,7 @@ label{display:block;color:var(--mu);font-size:12.5px;margin:4px 0}
 <script>
 const $=i=>document.getElementById(i),cv=$('cv'),oc=document.createElement('canvas');
 let ctx=cv.getContext('2d');
-const S={lay:'oval',title:'SINTA & MUKHLAS',sub:'',foot:'PHOTO BY ANTARA KITA',font:'Cinzel',ts:1,bg:'#25402f',txt:'#f1ece0',ac:'#c9b27c',trans:'rand',hold:1.2,tdur:.45,stag:.25,quote:'Two souls, one timeless story.',wl:'a story|by|Antara Kita',wr:'the|moment|S & M',shape:'oval',bstyle:'scallop',fc:'#ecebe6',fw:.06,dim:.25,fz:1.25};
+const S={lay:'oval',title:'SINTA & MUKHLAS',sub:'',foot:'PHOTO BY ANTARA KITA',font:'Cinzel',ts:1,bg:'#25402f',txt:'#f1ece0',ac:'#c9b27c',trans:'rand',hold:1.8,tdur:.55,stag:.35,quote:'Two souls, one timeless story.',wl:'a story|by|Antara Kita',wr:'the|moment|S & M',shape:'oval',bstyle:'scallop',fc:'#ecebe6',fw:.06,dim:.25,fz:1.25};
 let noPre=0,slides=[],cur=0,BG=null,FR=null,cells=Array.from({length:9},()=>({imgs:[],zoom:1,ox:0,oy:0})),sel=0,exporting=false,t0=performance.now(),T=0,R=[],drag=null,spread=false;
 
 const K=['lay','title','sub','foot','quote','wl','wr','shape','bstyle','fc','fw','bg','txt'];
