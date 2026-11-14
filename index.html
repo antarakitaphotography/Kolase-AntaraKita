@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Template Kolase Antara Kita Photography</title>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Cormorant+Garamond:wght@500;600&family=Jost:wght@400;500&family=Playfair+Display:wght@500&family=Montserrat:wght@500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Poppins:wght@500;600&family=Dancing+Script:wght@500&family=Cormorant+Garamond:wght@500;600&family=Jost:wght@400;500&family=Playfair+Display:wght@500&family=Montserrat:wght@500&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#101612;--pn:#18201b;--ln:#2a352d;--tx:#e9e5d8;--mu:#8f9b91;--ac:#c9b27c}
 *{box-sizing:border-box}
@@ -33,6 +33,13 @@ label{display:block;color:var(--mu);font-size:12.5px;margin:4px 0}
 <body>
 <main><canvas id="cv" width="1080" height="1350"></canvas></main>
 <aside>
+<h3>Carousel</h3>
+<div id="sbar" class="chips" style="grid-template-columns:repeat(6,1fr)"></div>
+<div class="row"><button id="sadd">+ Slide</button><button id="sdup">Duplikat</button><button id="sdel">Hapus</button></div>
+<div class="row"><button id="sl">Pindah ←</button><button id="sr">Pindah →</button></div>
+<button id="sdemo">Isi susunan contoh 8 slide</button>
+<p class="h">Tiap slide punya template, foto, teks, warna latar, dan gaya bingkai sendiri. Font, animasi, dan ukuran berlaku untuk semua slide.</p>
+
 <h3>Ukuran</h3>
 <select id="size">
 <option value="1080x1350">Instagram post 4:5 (1080×1350)</option>
@@ -50,8 +57,8 @@ label{display:block;color:var(--mu);font-size:12.5px;margin:4px 0}
 
 <h3>Bingkai</h3>
 <div class="row"><select id="shape"><option value="oval">Oval</option><option value="circle">Lingkaran</option><option value="arch">Lengkung</option><option value="rounded">Sudut membulat</option><option value="rect">Persegi</option><option value="hexa">Segi enam</option><option value="octa">Segi delapan</option><option value="diamond">Belah ketupat</option><option value="heart">Hati</option></select>
-<select id="bstyle"><option value="scallop">Bergerigi</option><option value="solid">Polos</option><option value="double">Garis ganda</option><option value="gold">Emas mengilap</option><option value="goldline">Garis emas ganda</option><option value="line">Garis tipis</option><option value="glow">Bercahaya</option><option value="dots">Titik-titik</option><option value="none">Tanpa bingkai</option></select></div>
-<div class="row"><label>Warna<input id="fc" type="color"></label><label>Tebal<input id="fw" type="range" min=".01" max=".1" step=".005"></label></div>
+<select id="bstyle"><option value="scallop">Bergerigi</option><option value="solid">Polos</option><option value="double">Garis ganda</option><option value="stamp">Perangko</option><option value="gold">Emas mengilap</option><option value="goldline">Garis emas ganda</option><option value="line">Garis tipis</option><option value="glow">Bercahaya</option><option value="dots">Titik-titik</option><option value="none">Tanpa bingkai</option></select></div>
+<div class="row"><label>Warna<input id="fc" type="color"></label><label>Tebal<input id="fw" type="range" min=".01" max=".18" step=".005"></label></div>
 <div class="row"><button id="frb">Frame PNG sendiri</button><button id="frx">Hapus</button></div>
 <label>Ukuran frame PNG<input id="fz" type="range" min="1" max="2" step=".01"></label>
 <input id="frf" type="file" accept="image/png,image/webp" hidden>
@@ -63,8 +70,11 @@ label{display:block;color:var(--mu);font-size:12.5px;margin:4px 0}
 <input id="title" placeholder="Judul">
 <input id="sub" placeholder="Tanggal / keterangan">
 <input id="foot" placeholder="Kredit foto">
+<input id="quote" placeholder="Kutipan (kotak teks)">
+<input id="wl" placeholder="Kata kolom kiri, pisahkan dengan |">
+<input id="wr" placeholder="Kata kolom kanan, pisahkan dengan |">
 <select id="font">
-<option>Cinzel</option><option>Cormorant Garamond</option><option>Playfair Display</option><option>Montserrat</option><option>Jost</option>
+<option>Cinzel</option><option>Cormorant Garamond</option><option>Playfair Display</option><option>Montserrat</option><option>Poppins</option><option>Jost</option>
 </select>
 <label>Ukuran teks<input id="ts" type="range" min=".6" max="1.6" step=".05"></label>
 
@@ -80,10 +90,10 @@ label{display:block;color:var(--mu);font-size:12.5px;margin:4px 0}
 
 <h3>Animasi</h3>
 <select id="trans">
-<option value="rand">Acak (otomatis)</option><option value="slide">Geser kiri</option><option value="left">Geser kanan</option><option value="down">Geser bawah</option><option value="zoomout">Zoom keluar</option><option value="wipev">Sapu vertikal</option><option value="up">Geser atas</option><option value="fade">Pudar</option><option value="zoom">Zoom</option><option value="wipe">Sapu</option>
+<option value="rand">Acak (otomatis)</option><option value="reel">Gulir bergantian (reel)</option><option value="slide">Geser kiri</option><option value="left">Geser kanan</option><option value="down">Geser bawah</option><option value="zoomout">Zoom keluar</option><option value="wipev">Sapu vertikal</option><option value="up">Geser atas</option><option value="fade">Pudar</option><option value="zoom">Zoom</option><option value="wipe">Sapu</option>
 </select>
-<label>Lama tiap foto<input id="hold" type="range" min="1" max="6" step=".1"></label>
-<label>Lama transisi<input id="tdur" type="range" min=".2" max="1.5" step=".05"></label>
+<label>Lama tiap foto<input id="hold" type="range" min=".5" max="6" step=".1"></label>
+<label>Lama transisi<input id="tdur" type="range" min=".15" max="1.5" step=".05"></label>
 <label>Jeda antar kotak<input id="stag" type="range" min="0" max="1.5" step=".05"></label>
 
 <h3>Kotak terpilih: <span id="selname">1</span></h3>
@@ -96,14 +106,19 @@ label{display:block;color:var(--mu);font-size:12.5px;margin:4px 0}
 
 <h3>Simpan</h3>
 <div class="row"><button id="png">PNG</button><button id="vid" class="pri">Rekam video</button></div>
+<div class="row"><button id="pngall">Semua PNG</button><button id="vidall">Semua video</button></div>
 <p class="h" id="st">Video direkam langsung dari kanvas, jadi biarkan tab ini tetap terbuka selama merekam.</p>
 </aside>
 
 <script>
-const $=i=>document.getElementById(i),cv=$('cv'),ctx=cv.getContext('2d');
-const S={lay:'oval',title:'SINTA & MUKHLAS',sub:'',foot:'PHOTO BY ANTARA KITA',font:'Cinzel',ts:1,bg:'#25402f',txt:'#f1ece0',ac:'#c9b27c',trans:'rand',hold:2.5,tdur:.7,stag:.4,shape:'oval',bstyle:'scallop',fc:'#ecebe6',fw:.06,dim:.25,fz:1.25};
-let BG=null,FR=null,cells=Array.from({length:9},()=>({imgs:[],zoom:1,ox:0,oy:0})),sel=0,exporting=false,t0=performance.now(),T=0,R=[],drag=null,spread=false;
+const $=i=>document.getElementById(i),cv=$('cv'),oc=document.createElement('canvas');
+let ctx=cv.getContext('2d');
+const S={lay:'oval',title:'SINTA & MUKHLAS',sub:'',foot:'PHOTO BY ANTARA KITA',font:'Cinzel',ts:1,bg:'#25402f',txt:'#f1ece0',ac:'#c9b27c',trans:'rand',hold:1.2,tdur:.45,stag:.25,quote:'Two souls, one timeless story.',wl:'a story|by|Antara Kita',wr:'the|moment|S & M',shape:'oval',bstyle:'scallop',fc:'#ecebe6',fw:.06,dim:.25,fz:1.25};
+let noPre=0,slides=[],cur=0,BG=null,FR=null,cells=Array.from({length:9},()=>({imgs:[],zoom:1,ox:0,oy:0})),sel=0,exporting=false,t0=performance.now(),T=0,R=[],drag=null,spread=false;
 
+const K=['lay','title','sub','foot','quote','wl','wr','shape','bstyle','fc','fw','bg','txt'];
+const syn=()=>K.forEach(k=>{const e=$(k);if(e)e.value=S[k]});
+const QC={1:['#f6f2ec','#1b2a4a'],2:['#a73a14','#f6f2ec'],3:['#efe6d8','#8c1f12']};
 const grid=(c,r,x,y,W,H,g)=>{const cw=(W-g*(c-1))/c,ch=(H-g*(r-1))/r,o=[];for(let j=0;j<r;j++)for(let i=0;i<c;i++)o.push({x:x+i*(cw+g),y:y+j*(ch+g),w:cw,h:ch});return o};
 const std=(w,h)=>[['title',w/2,h*.045,.032],['foot',w/2,h*.965,.02]];
 const LAY={
@@ -119,11 +134,20 @@ v2:['Atas bawah',(w,h)=>({c:grid(1,2,0,0,w,h,w*.008),t:[]})],
 g9:['Kolase 9',(w,h)=>({c:grid(3,3,w*.03,h*.04,w*.94,h*.92,w*.01),t:[]})],
 one:['Satu foto',(w,h)=>({c:[{x:w*.1,y:h*.12,w:w*.8,h:h*.76}],t:std(w,h)})],
 full:['Foto penuh',(w,h)=>({c:[{x:0,y:0,w,h}],t:[['title',w/2,h*.92,.04],['sub',w/2,h*.955,.02]]})],
-stair:['Tangga',(w,h)=>({c:[{x:w*.5,y:0,w:w*.5,h:h*.33},{x:w*.35,y:h*.33,w:w*.65,h:h*.34},...grid(3,1,w*.18,h*.67,w*.82,h*.33,0)],t:[['title',w*.25,h*.2,.03,w*.4],['sub',w*.25,h*.235,.016,w*.4]]})]
+stair:['Tangga',(w,h)=>({c:[{x:w*.5,y:0,w:w*.5,h:h*.33},{x:w*.35,y:h*.33,w:w*.65,h:h*.34},...grid(3,1,w*.18,h*.67,w*.82,h*.33,0)],t:[['title',w*.25,h*.2,.03,w*.4],['sub',w*.25,h*.235,.016,w*.4]]})],
+tiles6:['Kotak teks',(w,h)=>{const m=w*.1,g=w*.028,cw=(w-2*m-2*g)/3,c=grid(3,2,m,h*.32,w-2*m,cw*2+g,g);c[2].q=1;c[4].q=2;return{c,t:[['sub',w/2,h*.1,.026],['title',w/2,h*.17,.06,w*.8]],l:[['wl',w*.2,h*.92,w*.8,h*.92,.022]]}},{bg:'#0e1f45',txt:'#f7f4ee'}],
+stag2:['Dua potret',(w,h)=>({c:[{x:w*.487,y:h*.149,w:w*.305,h:h*.36},{x:w*.25,y:h*.514,w:w*.245,h:h*.365}],t:[],l:[['wl',w*.2,h*.155,w*.2,h*.44,.02,'right'],['wr',w*.77,h*.58,w*.77,h*.87,.02,'left']]}),{bg:'#0c1a3d',txt:'#e8ecf5'}],
+ticket:['Tiket',(w,h)=>({d:[[w*.315,h*.17,w*.385,h*.672,'#ece4da','tk']],c:[{x:w*.348,y:h*.256,w:w*.314,h:h*.34}],t:[],qp:[[w*.4,h*.63,w*.27,w*.024,'#1d1d1d','left',1]],l:[['wl',w*.235,h*.357,w*.235,h*.64,.02,'right'],['wr',w*.785,h*.357,w*.785,h*.64,.02,'left']]}),{bg:'#0a1020',txt:'#f1f1f1'}],
+stamp2:['Perangko 2',(w,h)=>({c:[{x:w*.112,y:h*.31,w:w*.326,h:h*.386,f:1},{x:w*.567,y:h*.31,w:w*.326,h:h*.386,f:1,q:3}],t:[],l:[['wl',w*.2,h*.15,w*.8,h*.15,.02],['wl',w*.2,h*.85,w*.8,h*.85,.02]]}),{shape:'rect',bstyle:'stamp',fc:'#efe6d8',fw:.1,bg:'#0b1a3f',txt:'#f4f1ea'}],
+spread:['Buku terbuka',(w,h)=>({d:[[w*.105,h*.305,w*.79,h*.39,'#ffffff']],c:[{x:w*.213,y:h*.428,w:w*.183,h:h*.145},{x:w*.5,y:h*.31,w:w*.385,h:h*.378}],t:[],l:[['wl',w*.3,h*.247,w*.75,h*.247,.026]]}),{bg:'#0a0a0a',txt:'#f4f4f4'}],
+half:['Separuh',(w,h)=>({d:[[0,0,w,h*.514,'#e0d9d2']],c:[{x:w*.3,y:h*.108,w:w*.4,h:w*.4},{x:0,y:h*.514,w,h:h*.486}],t:[]}),{bg:'#0a0a0a'}],
+overlap:['Tumpuk',(w,h)=>({d:[[0,0,w,h*.5,'#ede4db']],c:[{x:0,y:h*.5,w,h:h*.5},{x:w*.25,y:h*.25,w:w*.5,h:h*.516,f:1}],t:[],qp:[[w*.1,h*.6,w*.3,w*.05,'#f5efe6','left',1]],l:[['wl',w*.21,h*.158,w*.21,h*.44,.02,'right','#1a1f33'],['wr',w*.79,h*.585,w*.79,h*.875,.02,'left','#f4f1ea']]}),{shape:'rect',bstyle:'solid',fc:'#050505',fw:.012,bg:'#0a0a0a'}],
+stamp1:['Perangko 1',(w,h)=>({d:[[0,0,w*.5,h,'#0b0b0b'],[w*.5,0,w*.5,h,'bg']],c:[{x:w*.287,y:h*.267,w:w*.437,h:h*.52,f:1}],t:[]}),{shape:'rect',bstyle:'stamp',fc:'#f3f1ed',fw:.14,bg:'#10224d'}],
+reel3:['Reel 3 kolom',(w,h)=>({c:grid(3,1,0,0,w,h,w*.012),t:[]}),{trans:'reel',bg:'#0a0a0a'}]
 };
 
 LAY.g4a=['Slideshow 4',LAY.g4[1]];
-const TR=['fade','slide','up','zoom','wipe','left','down','zoomout','wipev'];
+const TR=['fade','slide','up','zoom','wipe','left','down','zoomout','wipev','reel'];
 const ease=p=>p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
 
 function tx(k,x,y,f,mw){
@@ -134,6 +158,25 @@ function tx(k,x,y,f,mw){
   ctx.fillStyle=k=='title'?S.txt:S.ac;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(s,x,y);
 }
 
+function dec(a){
+  const[x,y,w,h,c,k]=a;ctx.fillStyle=c=='bg'?S.bg:c;ctx.beginPath();
+  if(k=='tk'){const rr=w*.045,f=y+h*.82;ctx.moveTo(x,y);ctx.lineTo(x+w,y);ctx.lineTo(x+w,f-rr);ctx.arc(x+w,f,rr,-1.5708,1.5708,true);ctx.lineTo(x+w,y+h);ctx.lineTo(x,y+h);ctx.lineTo(x,f+rr);ctx.arc(x,f,rr,1.5708,-1.5708,true);ctx.closePath()}
+  else ctx.rect(x,y,w,h);
+  ctx.fill();
+}
+function lst(k,x0,y0,x1,y1,f,al,col){
+  const a=(S[k]||'').split('|').map(z=>z.trim()).filter(Boolean),n=a.length;if(!n)return;
+  ctx.font='500 '+f*cv.width+'px Jost,sans-serif';ctx.letterSpacing='0px';ctx.fillStyle=col||S.txt;ctx.textAlign=al||'center';ctx.textBaseline='middle';
+  a.forEach((z,i)=>{const q=n>1?i/(n-1):.5;ctx.fillText(z,x0+(x1-x0)*q,y0+(y1-y0)*q)});
+}
+function qtx(x,y,mw,fs,col,al,top){
+  const s=S.quote;if(!s)return;
+  ctx.font='500 '+fs+'px "Dancing Script",cursive';ctx.letterSpacing='0px';
+  const L=[];let cu='';
+  s.split(' ').forEach(wd=>{const t=cu?cu+' '+wd:wd;if(ctx.measureText(t).width>mw&&cu){L.push(cu);cu=wd}else cu=t});L.push(cu);
+  const lh=fs*1.15,y0=top?y:y-(L.length-1)*lh/2;
+  ctx.fillStyle=col;ctx.textAlign=al;ctx.textBaseline='middle';L.forEach((l,i)=>ctx.fillText(l,x,y0+i*lh));
+}
 function px(r,d){
   const{x,y,w,h}=r;let a=w/2,b=h/2;const cx=x+a,cy=y+b,s=S.shape;
   ctx.beginPath();if(s=='circle')a=b=Math.min(a,b);
@@ -148,6 +191,13 @@ function frame(r){
   const st=S.bstyle;if(st=='none')return;const th=r.w*S.fw;
   ctx.save();ctx.fillStyle=ctx.strokeStyle=S.fc;
   if(st=='double'){ctx.lineWidth=Math.max(2,th*.12);px(r,th*.35);ctx.stroke();px(r,th);ctx.stroke()}
+  else if(st=='stamp'){
+    const M=ctx,o=oc.getContext('2d');
+    if(oc.width!=cv.width||oc.height!=cv.height){oc.width=cv.width;oc.height=cv.height}else o.clearRect(0,0,oc.width,oc.height);
+    ctx=o;o.globalCompositeOperation='source-over';o.fillStyle=S.fc;px(r,th);o.fill();
+    o.globalCompositeOperation='destination-out';o.lineCap='round';o.lineWidth=th*.7;o.setLineDash([0,th*1.2]);px(r,th);o.stroke();
+    ctx=M;M.shadowColor='#0006';M.shadowBlur=20;M.shadowOffsetY=6;M.drawImage(oc,0,0);
+  }
   else if(st=='gold'||st=='goldline'){
     const g=ctx.createLinearGradient(r.x,r.y,r.x+r.w,r.y+r.h);
     [['0','#8a6a1f'],['.25','#f6e3a0'],['.5','#b58a2c'],['.75','#fff2bd'],['1','#8a6a1f']].forEach(a=>g.addColorStop(+a[0],a[1]));
@@ -176,7 +226,8 @@ function path(r){if(r.f)px(r,0);else{ctx.beginPath();ctx.rect(r.x,r.y,r.w,r.h)}}
 function cell(r,i,t){
   const c=cells[i],n=c.imgs.length;
   ctx.save();path(r);ctx.clip();
-  if(!n){
+  if(r.q){const Q=QC[r.q];ctx.fillStyle=Q[0];ctx.fillRect(r.x,r.y,r.w,r.h);qtx(r.x+r.w/2,r.y+r.h/2,r.w*.8,r.w*.13,Q[1],'center')}
+  else if(!n){
     ctx.fillStyle='rgba(255,255,255,.07)';ctx.fillRect(r.x,r.y,r.w,r.h);
     if(!exporting){ctx.fillStyle=S.ac;ctx.font='300 '+r.w*.2+'px Jost,sans-serif';ctx.letterSpacing='0px';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('+',r.x+r.w/2,r.y+r.h/2)}
   }else{
@@ -195,6 +246,7 @@ function cell(r,i,t){
         case'down':ph(A,r,c,0,e*H,1,1);ph(B,r,c,0,-(1-e)*H,1,1);break;
         case'zoomout':ph(B,r,c,0,0,1,1);ph(A,r,c,0,0,1+.4*e,1-e);break;
         case'wipev':ph(A,r,c,0,0,1,1);ctx.save();ctx.beginPath();ctx.rect(r.x,r.y,W,H*e);ctx.clip();ph(B,r,c,0,0,1,1);ctx.restore();break;
+        case'reel':{const d=i%2?-1:1,g=H*.03,e2=1-Math.pow(1-p,3);ph(A,r,c,0,-d*e2*(H+g),1,1);ph(B,r,c,0,d*(1-e2)*(H+g),1,1);break}
         case'wipe':ph(A,r,c,0,0,1,1);ctx.save();ctx.beginPath();ctx.rect(r.x,r.y,W*e,H);ctx.clip();ph(B,r,c,0,0,1,1);ctx.restore();break;
       }
     }
@@ -207,8 +259,9 @@ function draw(t){
   if(BG){const k=Math.max(w/BG.width,h/BG.height);ctx.drawImage(BG,(w-BG.width*k)/2,(h-BG.height*k)/2,BG.width*k,BG.height*k);ctx.fillStyle='rgba(0,0,0,'+S.dim+')';ctx.fillRect(0,0,w,h)}else{ctx.fillStyle=S.bg;ctx.fillRect(0,0,w,h);
   const g=ctx.createRadialGradient(w/2,h*.4,0,w/2,h*.4,Math.max(w,h)*.8);
   g.addColorStop(0,'rgba(255,255,255,.07)');g.addColorStop(1,'rgba(0,0,0,.25)');ctx.fillStyle=g;ctx.fillRect(0,0,w,h)}
-  L.t.forEach(a=>tx(...a));
+  (L.d||[]).forEach(dec);L.t.forEach(a=>tx(...a));(L.l||[]).forEach(a=>lst(...a));
   R.forEach((r,i)=>{if(S.fall)r.f=1;if(r.f&&!FR)frame(r);cell(r,i,t);if(r.f&&FR){const z=S.fz,w=r.w*z,h=r.h*z;ctx.drawImage(FR,r.x+r.w/2-w/2,r.y+r.h/2-h/2,w,h)}});
+  (L.qp||[]).forEach(a=>qtx(...a));
   if(!exporting&&R[sel]){ctx.save();ctx.setLineDash([14,10]);ctx.lineWidth=4;ctx.strokeStyle=S.ac;path(R[sel]);ctx.stroke();ctx.restore()}
 }
 
@@ -226,7 +279,7 @@ $('size').onchange=e=>{
   if(v!='c'){const[a,b]=v.split('x');setSize(+a,+b)}
 };
 ['cw','ch'].forEach(k=>$(k).oninput=()=>{const a=+$('cw').value,b=+$('ch').value;if(a>=200&&b>=200&&a<=4000&&b<=4000)setSize(a,b)});
-['title','sub','foot','font','trans','shape','bstyle'].forEach(k=>{const e=$(k);e.value=S[k];e.oninput=()=>S[k]=e.value});
+['title','sub','foot','font','trans','shape','bstyle','quote','wl','wr'].forEach(k=>{const e=$(k);e.value=S[k];e.oninput=()=>S[k]=e.value});
 ['ts','hold','tdur','stag','fw','dim','fz'].forEach(k=>{const e=$(k);e.value=S[k];e.oninput=()=>S[k]=+e.value});
 ['bg','txt','ac','fc'].forEach(k=>{const e=$(k);e.value=S[k];e.oninput=()=>S[k]=e.value});
 $('fall').onchange=e=>S.fall=e.target.checked;
@@ -235,14 +288,14 @@ $('zoom').oninput=e=>cells[sel].zoom=+e.target.value;
 const lays=$('lays');
 Object.entries(LAY).forEach(([k,v])=>{
   const b=document.createElement('button');b.textContent=v[0];b.dataset.k=k;
-  b.onclick=()=>{S.lay=k;sel=0;$('auto').hidden=$('autoh').hidden=k!='g4a';[...lays.children].forEach(x=>x.classList.toggle('on',x.dataset.k==k));ui()};
+  b.onclick=()=>{S.lay=k;sel=0;{const P=LAY[k][2];if(P&&!noPre){Object.assign(S,P);syn();$('trans').value=S.trans}}$('auto').hidden=$('autoh').hidden=k!='g4a';[...lays.children].forEach(x=>x.classList.toggle('on',x.dataset.k==k));ui()};
   lays.appendChild(b);
 });
 lays.firstChild.classList.add('on');
 
 const pt=e=>{const b=cv.getBoundingClientRect(),k=cv.width/b.width;return[(e.clientX-b.left)*k,(e.clientY-b.top)*k]};
 cv.onpointerdown=e=>{
-  const[x,y]=pt(e),i=R.findIndex(r=>x>=r.x&&x<=r.x+r.w&&y>=r.y&&y<=r.y+r.h);
+  const[x,y]=pt(e);let i=-1;R.forEach((r,j)=>{if(x>=r.x&&x<=r.x+r.w&&y>=r.y&&y<=r.y+r.h)i=j});
   if(i<0)return;sel=i;drag={x,y};cv.setPointerCapture(e.pointerId);ui();
 };
 cv.onpointermove=e=>{
@@ -279,19 +332,50 @@ $('frf').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(f)FR=
 $('frx').onclick=()=>FR=null;
 const dl=(b,n)=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000)};
 $('png').onclick=()=>{exporting=true;draw(T);cv.toBlob(b=>{dl(b,'kolase.png');exporting=false})};
-$('vid').onclick=()=>{
-  if(!window.MediaRecorder){$('st').textContent='Browser ini belum mendukung perekaman. Coba Chrome.';return}
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+function record(name){return new Promise(res=>{
   const mime=['video/mp4;codecs=avc1','video/webm;codecs=vp9','video/webm'].find(m=>MediaRecorder.isTypeSupported(m));
   const rec=new MediaRecorder(cv.captureStream(30),{mimeType:mime,videoBitsPerSecond:8e6}),ch=[],d=duration();
   exporting=true;t0=performance.now();
   rec.ondataavailable=e=>ch.push(e.data);
-  rec.onstop=()=>{exporting=false;dl(new Blob(ch,{type:mime}),'kolase.'+(mime.includes('mp4')?'mp4':'webm'));$('st').textContent='Video selesai diunduh.'};
-  rec.start();$('st').textContent='Merekam '+d.toFixed(1)+' detik. Jangan tutup tab ini.';
-  setTimeout(()=>rec.stop(),d*1000+200);
+  rec.onstop=()=>{exporting=false;dl(new Blob(ch,{type:mime}),name+'.'+(mime.includes('mp4')?'mp4':'webm'));res()};
+  rec.start();setTimeout(()=>rec.stop(),d*1000+200);
+})}
+const okRec=()=>window.MediaRecorder?true:($('st').textContent='Browser ini belum mendukung perekaman. Coba Chrome.',false);
+const nn=i=>String(i+1).padStart(2,'0');
+$('vid').onclick=async()=>{if(!okRec())return;$('st').textContent='Merekam '+duration().toFixed(1)+' detik. Jangan tutup tab ini.';await record('kolase');$('st').textContent='Video selesai diunduh.'};
+$('vidall').onclick=async()=>{
+  if(!okRec())return;slides[cur]=snap();const keep=cur;
+  for(let i=0;i<slides.length;i++){load(i);$('st').textContent='Merekam slide '+(i+1)+' dari '+slides.length+'. Jangan tutup tab ini.';await wait(300);await record('kolase-'+nn(i));await wait(500)}
+  load(keep);$('st').textContent='Semua video selesai diunduh.';
+};
+$('pngall').onclick=async()=>{
+  slides[cur]=snap();const keep=cur;exporting=true;
+  for(let i=0;i<slides.length;i++){load(i);draw(0);await new Promise(r=>cv.toBlob(b=>{dl(b,'kolase-'+nn(i)+'.png');r()}));await wait(350)}
+  exporting=false;load(keep);$('st').textContent='Semua PNG selesai diunduh.';
 };
 
-['Cinzel','Cormorant Garamond','Playfair Display','Montserrat','Jost'].forEach(f=>document.fonts.load('20px "'+f+'"'));
-ui();requestAnimationFrame(loop);
+['Cinzel','Cormorant Garamond','Playfair Display','Montserrat','Jost','Poppins','Dancing Script'].forEach(f=>document.fonts.load('20px "'+f+'"'));
+/* carousel */
+const newCells=()=>Array.from({length:9},()=>({imgs:[],zoom:1,ox:0,oy:0}));
+const snap=()=>{const o={cells};K.forEach(k=>o[k]=S[k]);return o};
+function bar(){const b=$('sbar');b.innerHTML='';slides.forEach((_,i)=>{const e=document.createElement('button');e.textContent=i+1;e.className=i==cur?'on':'';e.onclick=()=>go(i);b.appendChild(e)})}
+function load(i){
+  cur=i;const o=slides[i];K.forEach(k=>S[k]=o[k]);cells=o.cells;sel=0;
+  syn();
+  noPre=1;lays.querySelector('[data-k="'+S.lay+'"]').click();noPre=0;bar();ui();
+}
+function go(i){slides[cur]=snap();load(i)}
+$('sadd').onclick=()=>{slides[cur]=snap();slides.push({...snap(),cells:newCells()});load(slides.length-1)};
+$('sdup').onclick=()=>{slides[cur]=snap();const o=slides[cur];slides.splice(cur+1,0,{...o,cells:o.cells.map(c=>({...c,imgs:[...c.imgs]}))});load(cur+1)};
+$('sdel').onclick=()=>{if(slides.length<2)return;slides.splice(cur,1);load(Math.min(cur,slides.length-1))};
+const mv=d=>{const j=cur+d;if(j<0||j>=slides.length)return;slides[cur]=snap();[slides[cur],slides[j]]=[slides[j],slides[cur]];cur=j;bar()};
+$('sl').onclick=()=>mv(-1);$('sr').onclick=()=>mv(1);
+$('sdemo').onclick=()=>{
+  if(slides.some(o=>o.cells.some(c=>c.imgs.length))||cells.some(c=>c.imgs.length)){if(!confirm('Ganti semua slide dengan susunan contoh? Foto yang sudah diunggah akan hilang.'))return}
+  slides[cur]=snap();const b=slides[cur];slides=['tiles6','stag2','ticket','stamp2','spread','half','overlap','stamp1'].map(k=>({...b,...(LAY[k][2]||{}),lay:k,cells:newCells()}));load(0);
+};
+slides=[snap()];bar();ui();requestAnimationFrame(loop);
 </script>
 </body>
 </html>
