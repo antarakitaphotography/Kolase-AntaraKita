@@ -116,7 +116,7 @@ label{display:block;color:var(--mu);font-size:12.5px;margin:4px 0}
 <p class="h" id="st">Video direkam langsung dari kanvas, jadi biarkan tab ini tetap terbuka selama merekam.</p>
 <h3>Proyek di perangkat</h3>
 <div class="row"><button id="psave">Simpan proyek</button><button id="pload">Buka proyek</button></div>
-<button id="inst" class="pri" hidden>Pasang aplikasi di perangkat</button>
+<button id="inst" class="pri">Pasang aplikasi di perangkat</button>
 <p class="h">Disimpan di penyimpanan browser perangkat ini dan tidak diunggah ke mana pun. Hanya satu slot proyek: menyimpan lagi menggantikan yang lama.</p>
 </aside>
 
@@ -420,8 +420,12 @@ $('pload').onclick=async()=>{
 
 /* PWA */
 let dp=null;
-addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e;$('inst').hidden=false});
-$('inst').onclick=async()=>{if(!dp)return;dp.prompt();await dp.userChoice;dp=null;$('inst').hidden=true};
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e});
+$('inst').onclick=async()=>{
+  if(dp){dp.prompt();await dp.userChoice;dp=null;return}
+  alert('Browser ini tidak menampilkan jendela pasang otomatis.\n\nBuka menu browser (titik tiga), lalu pilih "Instal aplikasi" atau "Tambahkan ke layar utama".');
+};
+if(matchMedia('(display-mode: standalone)').matches)$('inst').hidden=true;
 addEventListener('appinstalled',()=>$('inst').hidden=true);
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js');
 if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();
