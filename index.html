@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Template Kolase Antara Kita Photography</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#18201b">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Poppins:wght@500;600&family=Dancing+Script:wght@500&family=Cormorant+Garamond:wght@500;600&family=Jost:wght@400;500&family=Playfair+Display:wght@500&family=Montserrat:wght@500&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#101612;--pn:#18201b;--ln:#2a352d;--tx:#e9e5d8;--mu:#8f9b91;--ac:#c9b27c}
@@ -28,11 +32,13 @@ label{display:block;color:var(--mu);font-size:12.5px;margin:4px 0}
 .chips button{margin:0;padding:8px 4px}
 :focus-visible{outline:2px solid var(--ac);outline-offset:1px}
 @media(max-width:820px){body{flex-direction:column}aside{width:100%;max-height:none;position:static;border:0}canvas{max-height:70vh}}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:14px}.brand img{border-radius:10px}.brand b{font:600 15px Jost;color:var(--tx)}
 </style>
 </head>
 <body>
 <main><canvas id="cv" width="1080" height="1350"></canvas></main>
 <aside>
+<div class="brand"><img src="icon-192.png" width="42" height="42" alt=""><b>Kolase Antara Kita</b></div>
 <h3>Carousel</h3>
 <div id="sbar" class="chips" style="grid-template-columns:repeat(6,1fr)"></div>
 <div class="row"><button id="sadd">+ Slide</button><button id="sdup">Duplikat</button><button id="sdel">Hapus</button></div>
@@ -108,6 +114,10 @@ label{display:block;color:var(--mu);font-size:12.5px;margin:4px 0}
 <div class="row"><button id="png">PNG</button><button id="vid" class="pri">Rekam video</button></div>
 <div class="row"><button id="pngall">Semua PNG</button><button id="vidall">Semua video</button></div>
 <p class="h" id="st">Video direkam langsung dari kanvas, jadi biarkan tab ini tetap terbuka selama merekam.</p>
+<h3>Proyek di perangkat</h3>
+<div class="row"><button id="psave">Simpan proyek</button><button id="pload">Buka proyek</button></div>
+<button id="inst" class="pri" hidden>Pasang aplikasi di perangkat</button>
+<p class="h">Disimpan di penyimpanan browser perangkat ini dan tidak diunggah ke mana pun. Hanya satu slot proyek: menyimpan lagi menggantikan yang lama.</p>
 </aside>
 
 <script>
@@ -375,6 +385,47 @@ $('sdemo').onclick=()=>{
   if(slides.some(o=>o.cells.some(c=>c.imgs.length))||cells.some(c=>c.imgs.length)){if(!confirm('Ganti semua slide dengan susunan contoh? Foto yang sudah diunggah akan hilang.'))return}
   slides[cur]=snap();const b=slides[cur];slides=['tiles6','stag2','ticket','stamp2','spread','half','overlap','stamp1'].map(k=>({...b,...(LAY[k][2]||{}),lay:k,cells:newCells()}));load(0);
 };
+/* penyimpanan lokal (IndexedDB) */
+const G=['font','ts','ac','trans','hold','tdur','stag','dim','fz'];
+const DB=()=>new Promise((ok,no)=>{const q=indexedDB.open('kolase',1);q.onupgradeneeded=()=>q.result.createObjectStore('kv');q.onsuccess=()=>ok(q.result);q.onerror=()=>no(q.error)});
+const kv=async(m,k,v)=>{const d=await DB();return new Promise((ok,no)=>{const t=d.transaction('kv',m=='get'?'readonly':'readwrite'),st=t.objectStore('kv'),r=m=='get'?st.get(k):st.put(v,k);t.oncomplete=()=>ok(r.result);t.onerror=()=>no(t.error)})};
+const toBlob=(c,type,q)=>new Promise(r=>c.toBlob(r,type,q));
+const toCanvas=async b=>{const i=await createImageBitmap(b),c=document.createElement('canvas');c.width=i.width;c.height=i.height;c.getContext('2d').drawImage(i,0,0);return c};
+$('psave').onclick=async()=>{
+  try{
+    $('st').textContent='Menyimpan proyek…';slides[cur]=snap();
+    const P={cur,w:cv.width,h:cv.height,S:{fall:!!S.fall},slides:[],bg:BG?await toBlob(BG,'image/jpeg',.9):null,fr:FR?await toBlob(FR,'image/png'):null};
+    G.forEach(k=>P.S[k]=S[k]);
+    for(const o of slides){const q={cells:[]};K.forEach(k=>q[k]=o[k]);
+      for(const c of o.cells)q.cells.push({zoom:c.zoom,ox:c.ox,oy:c.oy,imgs:await Promise.all(c.imgs.map(i=>toBlob(i,'image/jpeg',.92)))});
+      P.slides.push(q)}
+    await kv('put','proyek',P);$('st').textContent='Proyek tersimpan di perangkat ini.';
+  }catch(e){$('st').textContent='Gagal menyimpan: penyimpanan perangkat mungkin penuh.'}
+};
+$('pload').onclick=async()=>{
+  try{
+    const P=await kv('get','proyek');if(!P){$('st').textContent='Belum ada proyek tersimpan.';return}
+    $('st').textContent='Membuka proyek…';
+    Object.assign(S,P.S);G.forEach(k=>$(k).value=S[k]);$('fall').checked=!!S.fall;
+    const v=P.w+'x'+P.h,o=[...$('size').options].find(x=>x.value==v);
+    $('size').value=o?v:'c';$('cust').hidden=!!o;$('cw').value=P.w;$('ch').value=P.h;cv.width=P.w;cv.height=P.h;
+    BG=P.bg?await toCanvas(P.bg):null;FR=P.fr?await toCanvas(P.fr):null;
+    slides=[];
+    for(const q of P.slides){const o={cells:newCells()};K.forEach(k=>o[k]=q[k]);
+      for(let i=0;i<q.cells.length&&i<9;i++){const c=q.cells[i];Object.assign(o.cells[i],{zoom:c.zoom,ox:c.ox,oy:c.oy,imgs:await Promise.all(c.imgs.map(toCanvas))})}
+      slides.push(o)}
+    load(Math.min(P.cur,slides.length-1));$('st').textContent='Proyek dibuka.';
+  }catch(e){$('st').textContent='Gagal membuka proyek tersimpan.'}
+};
+
+/* PWA */
+let dp=null;
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e;$('inst').hidden=false});
+$('inst').onclick=async()=>{if(!dp)return;dp.prompt();await dp.userChoice;dp=null;$('inst').hidden=true};
+addEventListener('appinstalled',()=>$('inst').hidden=true);
+if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js');
+if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();
+
 slides=[snap()];bar();ui();requestAnimationFrame(loop);
 </script>
 </body>
