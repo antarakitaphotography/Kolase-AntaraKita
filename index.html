@@ -103,7 +103,7 @@ label{display:block;color:var(--mu);font-size:12.5px;margin:4px 0}
 <label>Jeda antar kotak<input id="stag" type="range" min="0" max="1.5" step=".05"></label>
 
 <h3>Kotak terpilih: <span id="selname">1</span></h3>
-<p class="h">Klik kotak di kanvas, seret untuk menggeser foto, klik dua kali untuk menambah foto. Tiap kotak boleh berisi banyak foto, nanti bergantian dengan transisi.</p>
+<p class="h">Klik kotak di kanvas. Seret di dalam kotak untuk menggeser foto, atau seret keluar dari kotak ke kotak lain untuk menukar posisinya. Klik dua kali untuk menambah foto. Tiap kotak boleh berisi banyak foto, nanti bergantian dengan transisi.</p>
 <div class="row"><button id="add">Tambah foto</button><button id="clr">Kosongkan</button></div>
 <button id="all">Sebar banyak foto ke semua kotak</button>
 <label>Zoom foto<input id="zoom" type="range" min="1" max="3" step=".01"></label>
@@ -272,6 +272,12 @@ function draw(t){
   R.forEach((r,i)=>{if(S.fall)r.f=1;if(r.f&&!FR)frame(r);cell(r,i,t);if(r.f&&FR){const z=S.fz,w=r.w*z,h=r.h*z;ctx.drawImage(FR,r.x+r.w/2-w/2,r.y+r.h/2-h/2,w,h)}});
   (L.qp||[]).forEach(a=>qtx(...a));
   if(!exporting&&R[sel]){ctx.save();ctx.setLineDash([14,10]);ctx.lineWidth=4;ctx.strokeStyle=S.ac;path(R[sel]);ctx.stroke();ctx.restore()}
+  if(!exporting&&drag&&drag.sw){
+    const j=drag.over;
+    if(j>=0){ctx.save();ctx.fillStyle='rgba(201,178,124,.28)';path(R[j]);ctx.fill();ctx.lineWidth=6;ctx.strokeStyle=S.ac;ctx.setLineDash([]);ctx.stroke();ctx.restore()}
+    const im=cells[drag.from].imgs[0];
+    if(im){const gw=cv.width*.16,gh=gw*im.height/im.width;ctx.save();ctx.globalAlpha=.85;ctx.shadowColor='#000a';ctx.shadowBlur=20;ctx.drawImage(im,drag.px-gw/2,drag.py-gh/2,gw,gh);ctx.restore()}
+  }
 }
 
 function duration(){const m=Math.max(1,...cells.slice(0,R.length||1).map(c=>c.imgs.length));return Math.max(3,S.hold*m)}
@@ -303,15 +309,24 @@ Object.entries(LAY).forEach(([k,v])=>{
 lays.firstChild.classList.add('on');
 
 const pt=e=>{const b=cv.getBoundingClientRect(),k=cv.width/b.width;return[(e.clientX-b.left)*k,(e.clientY-b.top)*k]};
+const hit=(x,y)=>{let i=-1;R.forEach((r,j)=>{if(x>=r.x&&x<=r.x+r.w&&y>=r.y&&y<=r.y+r.h)i=j});return i};
 cv.onpointerdown=e=>{
-  const[x,y]=pt(e);let i=-1;R.forEach((r,j)=>{if(x>=r.x&&x<=r.x+r.w&&y>=r.y&&y<=r.y+r.h)i=j});
-  if(i<0)return;sel=i;drag={x,y};cv.setPointerCapture(e.pointerId);ui();
+  const[x,y]=pt(e),i=hit(x,y);if(i<0)return;
+  sel=i;drag={x,y,from:i,o:{ox:cells[i].ox,oy:cells[i].oy},sw:false,over:-1,px:x,py:y};cv.setPointerCapture(e.pointerId);ui();
 };
 cv.onpointermove=e=>{
-  if(!drag)return;const[x,y]=pt(e),r=R[sel],c=cells[sel],m=.6*c.zoom;
-  c.ox=Math.max(-m,Math.min(m,c.ox+(x-drag.x)/r.w));c.oy=Math.max(-m,Math.min(m,c.oy+(y-drag.y)/r.h));drag={x,y};
+  if(!drag)return;const[x,y]=pt(e),f=drag.from,r=R[f],c=cells[f];
+  const out=x<r.x||x>r.x+r.w||y<r.y||y>r.y+r.h;
+  drag.sw=out&&!r.q;drag.px=x;drag.py=y;
+  if(drag.sw){c.ox=drag.o.ox;c.oy=drag.o.oy;const j=hit(x,y);drag.over=j>=0&&j!=f&&!R[j].q?j:-1}
+  else if(!r.q){const m=.6*c.zoom;c.ox=Math.max(-m,Math.min(m,c.ox+(x-drag.x)/r.w));c.oy=Math.max(-m,Math.min(m,c.oy+(y-drag.y)/r.h));drag.over=-1}
+  drag.x=x;drag.y=y;
 };
-cv.onpointerup=()=>drag=null;
+cv.onpointerup=()=>{
+  if(drag&&drag.sw&&drag.over>=0){const a=drag.from,b=drag.over;[cells[a],cells[b]]=[cells[b],cells[a]];sel=b;ui()}
+  drag=null;
+};
+cv.onpointercancel=()=>{drag=null};
 cv.ondblclick=()=>{spread=false;$('file').click()};
 
 const loadImg=f=>new Promise(res=>{
