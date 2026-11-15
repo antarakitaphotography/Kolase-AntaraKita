@@ -118,6 +118,7 @@ label{display:block;color:var(--mu);font-size:12.5px;margin:4px 0}
 <canvas id="wf" width="600" height="80" style="width:100%;height:64px;max-width:none;max-height:none;box-shadow:none;cursor:ew-resize;border:1px solid var(--ln);border-radius:6px;margin-bottom:6px"></canvas>
 <div class="row"><label>Mulai (dtk)<input id="ma" type="number" min="0" step="0.5"></label><label>Selesai (dtk)<input id="mb" type="number" min="1" step="0.5"></label></div>
 <p class="h" id="mlen"></p>
+<button id="mprev" class="pri">▶ Pratinjau video + musik</button>
 <div class="row"><button id="mplay">Putar potongan</button><button id="msync">Samakan durasi video</button></div>
 <label>Volume musik<input id="vol" type="range" min="0" max="1" step=".05"></label>
 <label><input id="fade" type="checkbox" style="width:auto;margin-right:6px">Fade in dan fade out</label>
@@ -418,10 +419,10 @@ $('sdemo').onclick=()=>{
 /* musik latar */
 let AC=null,MUS=null,pv=null;
 const AX=()=>AC||(AC=new (window.AudioContext||window.webkitAudioContext)());
-function startMusic(d){
+function startMusic(d,mon){
   if(!MUS)return null;
   const x=AX(),g=x.createGain(),dest=x.createMediaStreamDestination(),src=x.createBufferSource(),v=S.vol;
-  src.buffer=MUS.buf;src.loop=true;src.loopStart=MUS.a;src.loopEnd=MUS.b;src.connect(g);g.connect(dest);g.gain.value=v;
+  src.buffer=MUS.buf;src.loop=true;src.loopStart=MUS.a;src.loopEnd=MUS.b;src.connect(g);g.connect(dest);if(mon)g.connect(x.destination);g.gain.value=v;
   return{dest,
     go(){x.resume();const t=x.currentTime;
       if(S.fade){g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.5);g.gain.setValueAtTime(v,t+Math.max(.5,d-1));g.gain.linearRampToValueAtTime(0,t+d)}
@@ -473,13 +474,21 @@ wf.onpointerdown=e=>{if(!MUS)return;const t=wt(e);wd=Math.abs(t-MUS.a)<Math.abs(
 wf.onpointermove=e=>{if(wd&&MUS)wmv(e)};
 wf.onpointerup=wf.onpointercancel=()=>{wd=null};
 $('mplay').onclick=()=>{
-  if(pv){stopPv();return}if(!MUS)return;
+  if(pv){stopPv();return}if(!MUS)return;stopPrev();
   const x=AX();x.resume();const s=x.createBufferSource(),g=x.createGain();
   g.gain.value=S.vol;s.buffer=MUS.buf;s.connect(g);g.connect(x.destination);
   s.start(0,MUS.a,MUS.b-MUS.a);s.onended=stopPv;pv={s,x,t:x.currentTime};
   $('mplay').textContent='Henti';tick();
 };
-$('vol').addEventListener('input',()=>{});
+let pm=null;
+function stopPrev(){if(!pm)return;clearTimeout(pm.tm);pm.A.stop();pm=null;$('mprev').textContent='▶ Pratinjau video + musik'}
+$('mprev').onclick=()=>{
+  if(pm){stopPrev();return}
+  if(!MUS){alert('Pilih musik dulu lewat tombol Pilih musik.');return}
+  stopPv();const d=duration();t0=performance.now();
+  const A=startMusic(d,true);A.go();pm={A,tm:setTimeout(stopPrev,d*1000+300)};
+  $('mprev').textContent='■ Henti pratinjau';
+};
 drawWF();
 
 /* penyimpanan lokal (IndexedDB) */
