@@ -110,6 +110,20 @@ label{display:block;color:var(--mu);font-size:12.5px;margin:4px 0}
 <p class="h" id="cnt"></p>
 <input id="file" type="file" accept="image/*" multiple hidden>
 
+<h3>Durasi dan musik</h3>
+<label>Durasi video (detik, 0 = otomatis)<input id="dur" type="number" min="0" max="180" step="1"></label>
+<div class="row"><button class="dp" data-d="15">15</button><button class="dp" data-d="30">30</button><button class="dp" data-d="60">60</button><button class="dp" data-d="0">Auto</button></div>
+<div class="row"><button id="mpick">Pilih musik</button><button id="mclr">Hapus musik</button></div>
+<p class="h" id="mname">Belum ada musik.</p>
+<canvas id="wf" width="600" height="80" style="width:100%;height:64px;max-width:none;max-height:none;box-shadow:none;cursor:ew-resize;border:1px solid var(--ln);border-radius:6px;margin-bottom:6px"></canvas>
+<div class="row"><label>Mulai (dtk)<input id="ma" type="number" min="0" step="0.5"></label><label>Selesai (dtk)<input id="mb" type="number" min="1" step="0.5"></label></div>
+<p class="h" id="mlen"></p>
+<div class="row"><button id="mplay">Putar potongan</button><button id="msync">Samakan durasi video</button></div>
+<label>Volume musik<input id="vol" type="range" min="0" max="1" step=".05"></label>
+<label><input id="fade" type="checkbox" style="width:auto;margin-right:6px">Fade in dan fade out</label>
+<input id="mfile" type="file" accept="audio/*" hidden>
+<p class="h">Potongan musik diulang kalau durasi video lebih panjang. Musik ikut terekam di setiap video.</p>
+
 <h3>Simpan</h3>
 <div class="row"><button id="png">PNG</button><button id="vid" class="pri">Rekam video</button></div>
 <div class="row"><button id="pngall">Semua PNG</button><button id="vidall">Semua video</button></div>
@@ -122,7 +136,7 @@ label{display:block;color:var(--mu);font-size:12.5px;margin:4px 0}
 <script>
 const $=i=>document.getElementById(i),cv=$('cv'),oc=document.createElement('canvas');
 let ctx=cv.getContext('2d');
-const S={lay:'oval',title:'SINTA & MUKHLAS',sub:'',foot:'PHOTO BY ANTARA KITA',font:'Cinzel',ts:1,bg:'#25402f',txt:'#f1ece0',ac:'#c9b27c',trans:'rand',hold:1.8,tdur:.55,stag:.35,quote:'Two souls, one timeless story.',wl:'a story|by|Antara Kita',wr:'the|moment|S & M',shape:'oval',bstyle:'scallop',fc:'#ecebe6',fw:.06,dim:.25,fz:1.25};
+const S={lay:'oval',title:'SINTA & MUKHLAS',sub:'',foot:'PHOTO BY ANTARA KITA',font:'Cinzel',ts:1,bg:'#25402f',txt:'#f1ece0',ac:'#c9b27c',trans:'rand',hold:1.8,tdur:.55,stag:.35,dur:0,vol:1,fade:true,quote:'Two souls, one timeless story.',wl:'a story|by|Antara Kita',wr:'the|moment|S & M',shape:'oval',bstyle:'scallop',fc:'#ecebe6',fw:.06,dim:.25,fz:1.25};
 let noPre=0,slides=[],cur=0,BG=null,FR=null,cells=Array.from({length:9},()=>({imgs:[],zoom:1,ox:0,oy:0})),sel=0,exporting=false,t0=performance.now(),T=0,R=[],drag=null,spread=false;
 
 const K=['lay','title','sub','foot','quote','wl','wr','shape','bstyle','fc','fw','bg','txt'];
@@ -280,7 +294,7 @@ function draw(t){
   }
 }
 
-function duration(){const m=Math.max(1,...cells.slice(0,R.length||1).map(c=>c.imgs.length));return Math.max(3,S.hold*m)}
+function duration(){if(S.dur>0)return S.dur;const m=Math.max(1,...cells.slice(0,R.length||1).map(c=>c.imgs.length));return Math.max(3,S.hold*m)}
 function loop(n){T=((n-t0)/1000)%duration();draw(T);requestAnimationFrame(loop)}
 
 /* UI */
@@ -295,7 +309,7 @@ $('size').onchange=e=>{
 };
 ['cw','ch'].forEach(k=>$(k).oninput=()=>{const a=+$('cw').value,b=+$('ch').value;if(a>=200&&b>=200&&a<=4000&&b<=4000)setSize(a,b)});
 ['title','sub','foot','font','trans','shape','bstyle','quote','wl','wr'].forEach(k=>{const e=$(k);e.value=S[k];e.oninput=()=>S[k]=e.value});
-['ts','hold','tdur','stag','fw','dim','fz'].forEach(k=>{const e=$(k);e.value=S[k];e.oninput=()=>S[k]=+e.value});
+['ts','hold','tdur','stag','fw','dim','fz','dur','vol'].forEach(k=>{const e=$(k);e.value=S[k];e.oninput=()=>S[k]=+e.value});
 ['bg','txt','ac','fc'].forEach(k=>{const e=$(k);e.value=S[k];e.oninput=()=>S[k]=e.value});
 $('fall').onchange=e=>S.fall=e.target.checked;
 $('zoom').oninput=e=>cells[sel].zoom=+e.target.value;
@@ -358,12 +372,14 @@ const dl=(b,n)=>{const a=document.createElement('a');a.href=URL.createObjectURL(
 $('png').onclick=()=>{exporting=true;draw(T);cv.toBlob(b=>{dl(b,'kolase.png');exporting=false})};
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 function record(name){return new Promise(res=>{
-  const mime=['video/mp4;codecs=avc1','video/webm;codecs=vp9','video/webm'].find(m=>MediaRecorder.isTypeSupported(m));
-  const rec=new MediaRecorder(cv.captureStream(30),{mimeType:mime,videoBitsPerSecond:8e6}),ch=[],d=duration();
+  const d=duration(),vs=cv.captureStream(30),A=startMusic(d);
+  if(A)A.dest.stream.getAudioTracks().forEach(t=>vs.addTrack(t));
+  const mime=(A?['video/mp4;codecs=avc1,mp4a.40.2','video/mp4','video/webm;codecs=vp9,opus','video/webm']:['video/mp4;codecs=avc1','video/webm;codecs=vp9','video/webm']).find(m=>MediaRecorder.isTypeSupported(m));
+  const rec=new MediaRecorder(vs,{mimeType:mime,videoBitsPerSecond:8e6}),ch=[];
   exporting=true;t0=performance.now();
   rec.ondataavailable=e=>ch.push(e.data);
-  rec.onstop=()=>{exporting=false;dl(new Blob(ch,{type:mime}),name+'.'+(mime.includes('mp4')?'mp4':'webm'));res()};
-  rec.start();setTimeout(()=>rec.stop(),d*1000+200);
+  rec.onstop=()=>{exporting=false;if(A)A.stop();dl(new Blob(ch,{type:mime}),name+'.'+(mime.includes('mp4')?'mp4':'webm'));res()};
+  rec.start();if(A)A.go();setTimeout(()=>rec.stop(),d*1000+200);
 })}
 const okRec=()=>window.MediaRecorder?true:($('st').textContent='Browser ini belum mendukung perekaman. Coba Chrome.',false);
 const nn=i=>String(i+1).padStart(2,'0');
@@ -399,8 +415,75 @@ $('sdemo').onclick=()=>{
   if(slides.some(o=>o.cells.some(c=>c.imgs.length))||cells.some(c=>c.imgs.length)){if(!confirm('Ganti semua slide dengan susunan contoh? Foto yang sudah diunggah akan hilang.'))return}
   slides[cur]=snap();const b=slides[cur];slides=['tiles6','stag2','ticket','stamp2','spread','half','overlap','stamp1'].map(k=>({...b,...(LAY[k][2]||{}),lay:k,cells:newCells()}));load(0);
 };
+/* musik latar */
+let AC=null,MUS=null,pv=null;
+const AX=()=>AC||(AC=new (window.AudioContext||window.webkitAudioContext)());
+function startMusic(d){
+  if(!MUS)return null;
+  const x=AX(),g=x.createGain(),dest=x.createMediaStreamDestination(),src=x.createBufferSource(),v=S.vol;
+  src.buffer=MUS.buf;src.loop=true;src.loopStart=MUS.a;src.loopEnd=MUS.b;src.connect(g);g.connect(dest);g.gain.value=v;
+  return{dest,
+    go(){x.resume();const t=x.currentTime;
+      if(S.fade){g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.5);g.gain.setValueAtTime(v,t+Math.max(.5,d-1));g.gain.linearRampToValueAtTime(0,t+d)}
+      src.start(t,MUS.a);src.stop(t+d+.3)},
+    stop(){try{src.stop()}catch(e){}}};
+}
+const wf=$('wf');let wd=null;
+function lenTxt(){$('mlen').textContent=MUS?'Potongan '+(MUS.b-MUS.a).toFixed(1)+' dtk dari total '+MUS.buf.duration.toFixed(1)+' dtk':''}
+function drawWF(){
+  const x=wf.getContext('2d'),W=wf.width,H=wf.height;x.clearRect(0,0,W,H);x.fillStyle='#0f1511';x.fillRect(0,0,W,H);
+  if(!MUS)return;
+  const D=MUS.buf.duration;x.fillStyle='#55655a';
+  MUS.pk.forEach((p,i)=>x.fillRect(i,H/2-p*H/2,1,Math.max(1,p*H)));
+  const A=MUS.a/D*W,B=MUS.b/D*W;x.fillStyle='rgba(201,178,124,.25)';x.fillRect(A,0,B-A,H);
+  x.fillStyle='#c9b27c';x.fillRect(A-1,0,3,H);x.fillRect(B-2,0,3,H);
+  if(MUS.ph!=null){x.fillStyle='#fff';x.fillRect(MUS.ph/D*W,0,2,H)}
+}
+function musUI(){
+  if(MUS){$('ma').value=MUS.a.toFixed(1);$('mb').value=MUS.b.toFixed(1)}else{$('ma').value='';$('mb').value='';$('mname').textContent='Belum ada musik.'}
+  lenTxt();drawWF();
+}
+function stopPv(){
+  if(!pv)return;const p=pv;pv=null;p.s.onended=null;try{p.s.stop()}catch(e){}
+  if(MUS)MUS.ph=null;$('mplay').textContent='Putar potongan';drawWF();
+}
+function tick(){if(!pv)return;MUS.ph=MUS.a+pv.x.currentTime-pv.t;drawWF();requestAnimationFrame(tick)}
+async function setMusic(f,r,nm){
+  try{
+    $('st').textContent='Membaca musik…';
+    const buf=await AX().decodeAudioData(await f.arrayBuffer()),W=600,pk=new Float32Array(W),ch=buf.getChannelData(0),step=ch.length/W;
+    for(let i=0;i<W;i++){let m=0;for(let j=Math.floor(i*step),e=Math.floor((i+1)*step);j<e;j+=16){const v=Math.abs(ch[j]);if(v>m)m=v}pk[i]=m}
+    const mx=Math.max(...pk)||1;for(let i=0;i<W;i++)pk[i]/=mx;
+    stopPv();MUS={buf,blob:f,name:nm||f.name||'musik',pk,a:r?r.a:0,b:r?r.b:Math.min(buf.duration,30),ph:null};
+    $('mname').textContent=MUS.name;musUI();$('st').textContent='Musik siap dipakai.';
+  }catch(e){$('st').textContent='Musik tidak bisa dibaca. Coba format MP3 atau M4A.'}
+}
+function clearMusic(){stopPv();MUS=null;musUI()}
+$('mpick').onclick=()=>$('mfile').click();
+$('mfile').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(f)await setMusic(f)};
+$('mclr').onclick=clearMusic;
+$('fade').checked=S.fade;$('fade').onchange=e=>S.fade=e.target.checked;
+document.querySelectorAll('.dp').forEach(b=>b.onclick=()=>{S.dur=+b.dataset.d;$('dur').value=S.dur});
+$('msync').onclick=()=>{if(!MUS)return;S.dur=Math.round(MUS.b-MUS.a);$('dur').value=S.dur};
+$('ma').oninput=()=>{if(!MUS)return;MUS.a=Math.max(0,Math.min(+$('ma').value||0,MUS.b-1));lenTxt();drawWF()};
+$('mb').oninput=()=>{if(!MUS)return;MUS.b=Math.min(MUS.buf.duration,Math.max(+$('mb').value||0,MUS.a+1));lenTxt();drawWF()};
+const wt=e=>{const r=wf.getBoundingClientRect();return Math.max(0,Math.min(1,(e.clientX-r.left)/r.width))*MUS.buf.duration};
+function wmv(e){const t=wt(e);if(wd=='a')MUS.a=Math.max(0,Math.min(t,MUS.b-1));else MUS.b=Math.min(MUS.buf.duration,Math.max(t,MUS.a+1));musUI()}
+wf.onpointerdown=e=>{if(!MUS)return;const t=wt(e);wd=Math.abs(t-MUS.a)<Math.abs(t-MUS.b)?'a':'b';wf.setPointerCapture(e.pointerId);wmv(e)};
+wf.onpointermove=e=>{if(wd&&MUS)wmv(e)};
+wf.onpointerup=wf.onpointercancel=()=>{wd=null};
+$('mplay').onclick=()=>{
+  if(pv){stopPv();return}if(!MUS)return;
+  const x=AX();x.resume();const s=x.createBufferSource(),g=x.createGain();
+  g.gain.value=S.vol;s.buffer=MUS.buf;s.connect(g);g.connect(x.destination);
+  s.start(0,MUS.a,MUS.b-MUS.a);s.onended=stopPv;pv={s,x,t:x.currentTime};
+  $('mplay').textContent='Henti';tick();
+};
+$('vol').addEventListener('input',()=>{});
+drawWF();
+
 /* penyimpanan lokal (IndexedDB) */
-const G=['font','ts','ac','trans','hold','tdur','stag','dim','fz'];
+const G=['font','ts','ac','trans','hold','tdur','stag','dim','fz','dur','vol'];
 const DB=()=>new Promise((ok,no)=>{const q=indexedDB.open('kolase',1);q.onupgradeneeded=()=>q.result.createObjectStore('kv');q.onsuccess=()=>ok(q.result);q.onerror=()=>no(q.error)});
 const kv=async(m,k,v)=>{const d=await DB();return new Promise((ok,no)=>{const t=d.transaction('kv',m=='get'?'readonly':'readwrite'),st=t.objectStore('kv'),r=m=='get'?st.get(k):st.put(v,k);t.oncomplete=()=>ok(r.result);t.onerror=()=>no(t.error)})};
 const toBlob=(c,type,q)=>new Promise(r=>c.toBlob(r,type,q));
@@ -408,7 +491,7 @@ const toCanvas=async b=>{const i=await createImageBitmap(b),c=document.createEle
 $('psave').onclick=async()=>{
   try{
     $('st').textContent='Menyimpan proyek…';slides[cur]=snap();
-    const P={cur,w:cv.width,h:cv.height,S:{fall:!!S.fall},slides:[],bg:BG?await toBlob(BG,'image/jpeg',.9):null,fr:FR?await toBlob(FR,'image/png'):null};
+    const P={cur,w:cv.width,h:cv.height,S:{fall:!!S.fall,fade:!!S.fade},music:MUS?MUS.blob:null,m:MUS?{a:MUS.a,b:MUS.b,n:MUS.name}:null,slides:[],bg:BG?await toBlob(BG,'image/jpeg',.9):null,fr:FR?await toBlob(FR,'image/png'):null};
     G.forEach(k=>P.S[k]=S[k]);
     for(const o of slides){const q={cells:[]};K.forEach(k=>q[k]=o[k]);
       for(const c of o.cells)q.cells.push({zoom:c.zoom,ox:c.ox,oy:c.oy,imgs:await Promise.all(c.imgs.map(i=>toBlob(i,'image/jpeg',.92)))});
@@ -420,9 +503,10 @@ $('pload').onclick=async()=>{
   try{
     const P=await kv('get','proyek');if(!P){$('st').textContent='Belum ada proyek tersimpan.';return}
     $('st').textContent='Membuka proyek…';
-    Object.assign(S,P.S);G.forEach(k=>$(k).value=S[k]);$('fall').checked=!!S.fall;
+    Object.assign(S,P.S);G.forEach(k=>$(k).value=S[k]);$('fall').checked=!!S.fall;$('fade').checked=S.fade!==false;
     const v=P.w+'x'+P.h,o=[...$('size').options].find(x=>x.value==v);
     $('size').value=o?v:'c';$('cust').hidden=!!o;$('cw').value=P.w;$('ch').value=P.h;cv.width=P.w;cv.height=P.h;
+    if(P.music)await setMusic(P.music,P.m,P.m&&P.m.n);else clearMusic();
     BG=P.bg?await toCanvas(P.bg):null;FR=P.fr?await toCanvas(P.fr):null;
     slides=[];
     for(const q of P.slides){const o={cells:newCells()};K.forEach(k=>o[k]=q[k]);
