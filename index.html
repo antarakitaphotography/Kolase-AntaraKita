@@ -107,6 +107,11 @@ label{display:block;color:var(--mu);font-size:12.5px;margin:4px 0}
 <div class="row"><button id="add">Tambah foto</button><button id="clr">Kosongkan</button></div>
 <button id="all">Sebar banyak foto ke semua kotak</button>
 <label>Zoom foto<input id="zoom" type="range" min="1" max="3" step=".01"></label>
+<label>Geser kotak kiri-kanan<input id="gdx" type="range" min="-.5" max=".5" step=".005"></label>
+<label>Geser kotak atas-bawah<input id="gdy" type="range" min="-.5" max=".5" step=".005"></label>
+<label>Lebar kotak<input id="gdw" type="range" min="-.4" max=".4" step=".005"></label>
+<label>Tinggi kotak<input id="gdh" type="range" min="-.4" max=".4" step=".005"></label>
+<button id="greset">Reset posisi dan ukuran kotak</button>
 <p class="h" id="cnt"></p>
 <input id="file" type="file" accept="image/*" multiple hidden>
 
@@ -135,12 +140,12 @@ label{display:block;color:var(--mu);font-size:12.5px;margin:4px 0}
 </aside>
 
 <script>
-const $=i=>document.getElementById(i),cv=$('cv'),oc=document.createElement('canvas');
-let ctx=cv.getContext('2d');
-const S={lay:'oval',title:'SINTA & MUKHLAS',sub:'',foot:'PHOTO BY ANTARA KITA',font:'Cinzel',ts:1,bg:'#25402f',txt:'#f1ece0',ac:'#c9b27c',trans:'rand',hold:1.8,tdur:.55,stag:.35,dur:0,vol:1,fade:true,quote:'Two souls, one timeless story.',wl:'a story|by|Antara Kita',wr:'the|moment|S & M',shape:'oval',bstyle:'scallop',fc:'#ecebe6',fw:.06,dim:.25,fz:1.25};
+const $=i=>document.getElementById(i),cv=$('cv'),oc=document.createElement('canvas'),outc=document.createElement('canvas'),octx=outc.getContext('2d');
+let SL=null,ctx=cv.getContext('2d');
+const S={lay:'oval',title:'SINTA & MUKHLAS',sub:'',foot:'PHOTO BY ANTARA KITA',font:'Cinzel',ts:1,bg:'#25402f',txt:'#f1ece0',ac:'#c9b27c',trans:'rand',hold:1.8,tdur:.55,stag:.35,dur:0,vol:1,fade:true,bw:1080,bh:1350,pano:0,quote:'Two souls, one timeless story.',wl:'a story|by|Antara Kita',wr:'the|moment|S & M',shape:'oval',bstyle:'scallop',fc:'#ecebe6',fw:.06,dim:.25,fz:1.25};
 let noPre=0,slides=[],cur=0,BG=null,FR=null,cells=Array.from({length:9},()=>({imgs:[],zoom:1,ox:0,oy:0})),sel=0,exporting=false,t0=performance.now(),T=0,R=[],drag=null,spread=false;
 
-const K=['lay','title','sub','foot','quote','wl','wr','shape','bstyle','fc','fw','bg','txt'];
+const K=['lay','title','sub','foot','quote','wl','wr','shape','bstyle','fc','fw','bg','txt','pano'];
 const syn=()=>K.forEach(k=>{const e=$(k);if(e)e.value=S[k]});
 const QC={1:['#f6f2ec','#1b2a4a'],2:['#a73a14','#f6f2ec'],3:['#efe6d8','#8c1f12']};
 const grid=(c,r,x,y,W,H,g)=>{const cw=(W-g*(c-1))/c,ch=(H-g*(r-1))/r,o=[];for(let j=0;j<r;j++)for(let i=0;i<c;i++)o.push({x:x+i*(cw+g),y:y+j*(ch+g),w:cw,h:ch});return o};
@@ -167,19 +172,21 @@ spread:['Buku terbuka',(w,h)=>({d:[[w*.105,h*.305,w*.79,h*.39,'#ffffff']],c:[{x:
 half:['Separuh',(w,h)=>({d:[[0,0,w,h*.514,'#e0d9d2']],c:[{x:w*.3,y:h*.108,w:w*.4,h:w*.4},{x:0,y:h*.514,w,h:h*.486}],t:[]}),{bg:'#0a0a0a'}],
 overlap:['Tumpuk',(w,h)=>({d:[[0,0,w,h*.5,'#ede4db']],c:[{x:0,y:h*.5,w,h:h*.5},{x:w*.25,y:h*.25,w:w*.5,h:h*.516,f:1}],t:[],qp:[[w*.1,h*.6,w*.3,w*.05,'#f5efe6','left',1]],l:[['wl',w*.21,h*.158,w*.21,h*.44,.02,'right','#1a1f33'],['wr',w*.79,h*.585,w*.79,h*.875,.02,'left','#f4f1ea']]}),{shape:'rect',bstyle:'solid',fc:'#050505',fw:.012,bg:'#0a0a0a'}],
 stamp1:['Perangko 1',(w,h)=>({d:[[0,0,w*.5,h,'#0b0b0b'],[w*.5,0,w*.5,h,'bg']],c:[{x:w*.287,y:h*.267,w:w*.437,h:h*.52,f:1}],t:[]}),{shape:'rect',bstyle:'stamp',fc:'#f3f1ed',fw:.14,bg:'#10224d'}],
-reel3:['Reel 3 kolom',(w,h)=>({c:grid(3,1,0,0,w,h,w*.012),t:[]}),{trans:'reel',bg:'#0a0a0a'}]
+reel3:['Reel 3 kolom',(w,h)=>({c:grid(3,1,0,0,w,h,w*.012),t:[]}),{trans:'reel',bg:'#0a0a0a'}],
+sam2:['Sambung 2 slide',(w,h)=>{const u=w/2,P=(i,x,y,a,b)=>({x:(i+x)*u,y:y*h,w:a*u,h:b*h});return{c:[P(0,.013,.289,.173,.194),P(0,.198,.155,.603,.18),P(0,.198,.344,.603,.5),P(0,.814,.221,.46,.241),P(1,0,.5,.4,.35),P(1,.54,.39,.445,.33),P(1,.765,.79,.22,.18)],t:[['title',u*.115,h*.7,.045,h*.42,Math.PI/2]]}},{bg:'#fffcf6',txt:'#1c1c1c',pano:2}],
+sam3:['Sambung 3 slide',(w,h)=>{const u=w/3,P=(i,x,y,a,b)=>({x:(i+x)*u,y:y*h,w:a*u,h:b*h});return{c:[P(0,.013,.289,.173,.194),P(0,.198,.155,.603,.18),P(0,.198,.344,.603,.5),P(0,.814,.221,.46,.241),P(1,0,.5,.4,.35),P(1,.38,.1,.5,.36),P(1,.76,.56,.5,.3),P(2,.34,.12,.5,.33),P(2,.34,.47,.5,.38)],t:[['title',u*.115,h*.7,.045,h*.42,Math.PI/2]]}},{bg:'#fffcf6',txt:'#1c1c1c',pano:3}]
 };
 
 LAY.g4a=['Slideshow 4',LAY.g4[1]];
 const TR=['fade','slide','up','zoom','wipe','left','down','zoomout','wipev','reel'];
 const ease=p=>p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
 
-function tx(k,x,y,f,mw){
-  const s=S[k];if(!s)return;mw=mw||cv.width*.9;
-  let fs=f*S.ts*cv.width;const fam=k=='title'?S.font:'Jost';
+function tx(k,x,y,f,mw,rot){
+  const s=S[k];if(!s)return;mw=mw||S.bw*.9;
+  let fs=f*S.ts*S.bw;const fam=k=='title'?S.font:'Jost';
   const set=()=>{ctx.font=(k=='title'?'':'500 ')+fs+'px "'+fam+'",serif';ctx.letterSpacing=(fs*.14)+'px'};
   set();while(ctx.measureText(s).width>mw&&fs>8){fs-=2;set()}
-  ctx.fillStyle=k=='title'?S.txt:S.ac;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(s,x,y);
+  ctx.fillStyle=k=='title'?S.txt:S.ac;ctx.textAlign='center';ctx.textBaseline='middle';if(rot){ctx.save();ctx.translate(x,y);ctx.rotate(rot);ctx.fillText(s,0,0);ctx.restore()}else ctx.fillText(s,x,y);
 }
 
 function dec(a){
@@ -190,7 +197,7 @@ function dec(a){
 }
 function lst(k,x0,y0,x1,y1,f,al,col){
   const a=(S[k]||'').split('|').map(z=>z.trim()).filter(Boolean),n=a.length;if(!n)return;
-  ctx.font='500 '+f*cv.width+'px Jost,sans-serif';ctx.letterSpacing='0px';ctx.fillStyle=col||S.txt;ctx.textAlign=al||'center';ctx.textBaseline='middle';
+  ctx.font='500 '+f*S.bw+'px Jost,sans-serif';ctx.letterSpacing='0px';ctx.fillStyle=col||S.txt;ctx.textAlign=al||'center';ctx.textBaseline='middle';
   a.forEach((z,i)=>{const q=n>1?i/(n-1):.5;ctx.fillText(z,x0+(x1-x0)*q,y0+(y1-y0)*q)});
 }
 function qtx(x,y,mw,fs,col,al,top){
@@ -279,13 +286,14 @@ function cell(r,i,t){
 }
 
 function draw(t){
-  const w=cv.width,h=cv.height,L=LAY[S.lay][1](w,h);R=L.c;
+  const w=cv.width,h=cv.height,L=LAY[S.lay][1](w,h);R=L.c;R.forEach((r,i)=>{const g=cells[i]&&cells[i].g;if(g){r.x+=g.dx*w;r.y+=g.dy*h;r.w=Math.max(20,r.w+g.dw*w);r.h=Math.max(20,r.h+g.dh*h)}});
   if(BG){const k=Math.max(w/BG.width,h/BG.height);ctx.drawImage(BG,(w-BG.width*k)/2,(h-BG.height*k)/2,BG.width*k,BG.height*k);ctx.fillStyle='rgba(0,0,0,'+S.dim+')';ctx.fillRect(0,0,w,h)}else{ctx.fillStyle=S.bg;ctx.fillRect(0,0,w,h);
   const g=ctx.createRadialGradient(w/2,h*.4,0,w/2,h*.4,Math.max(w,h)*.8);
   g.addColorStop(0,'rgba(255,255,255,.07)');g.addColorStop(1,'rgba(0,0,0,.25)');ctx.fillStyle=g;ctx.fillRect(0,0,w,h)}
   (L.d||[]).forEach(dec);L.t.forEach(a=>tx(...a));(L.l||[]).forEach(a=>lst(...a));
   R.forEach((r,i)=>{if(S.fall)r.f=1;if(r.f&&!FR)frame(r);cell(r,i,t);if(r.f&&FR){const z=S.fz,w=r.w*z,h=r.h*z;ctx.drawImage(FR,r.x+r.w/2-w/2,r.y+r.h/2-h/2,w,h)}});
   (L.qp||[]).forEach(a=>qtx(...a));
+  if(!exporting&&S.pano>1){const u=w/S.pano;ctx.save();ctx.setLineDash([16,12]);ctx.lineWidth=3;ctx.strokeStyle='rgba(201,178,124,.75)';for(let i=1;i<S.pano;i++){ctx.beginPath();ctx.moveTo(i*u,0);ctx.lineTo(i*u,h);ctx.stroke()}ctx.restore()}
   if(!exporting&&R[sel]){ctx.save();ctx.setLineDash([14,10]);ctx.lineWidth=4;ctx.strokeStyle=S.ac;path(R[sel]);ctx.stroke();ctx.restore()}
   if(!exporting&&drag&&drag.sw){
     const j=drag.over;
@@ -296,14 +304,15 @@ function draw(t){
 }
 
 function duration(){if(S.dur>0)return S.dur;const m=Math.max(1,...cells.slice(0,R.length||1).map(c=>c.imgs.length));return Math.max(3,S.hold*m)}
-function loop(n){T=((n-t0)/1000)%duration();draw(T);requestAnimationFrame(loop)}
+function loop(n){T=((n-t0)/1000)%duration();draw(T);if(SL!==null)octx.drawImage(cv,SL*S.bw,0,S.bw,S.bh,0,0,S.bw,S.bh);requestAnimationFrame(loop)}
 
 /* UI */
 function ui(){
-  $('selname').textContent=sel+1;$('zoom').value=cells[sel].zoom;
+  $('selname').textContent=sel+1;$('zoom').value=cells[sel].zoom;{const g=cells[sel].g||{};['dx','dy','dw','dh'].forEach(k=>$('g'+k).value=g[k]||0)}
   $('cnt').textContent=cells[sel].imgs.length+' foto di kotak ini';
 }
-function setSize(w,h){cv.width=w;cv.height=h}
+function setSize(w,h){S.bw=w;S.bh=h;fit()}
+function fit(){cv.width=S.bw*(S.pano>1?S.pano:1);cv.height=S.bh}
 $('size').onchange=e=>{
   const v=e.target.value;$('cust').hidden=v!='c';
   if(v!='c'){const[a,b]=v.split('x');setSize(+a,+b)}
@@ -318,7 +327,7 @@ $('zoom').oninput=e=>cells[sel].zoom=+e.target.value;
 const lays=$('lays');
 Object.entries(LAY).forEach(([k,v])=>{
   const b=document.createElement('button');b.textContent=v[0];b.dataset.k=k;
-  b.onclick=()=>{S.lay=k;sel=0;{const P=LAY[k][2];if(P&&!noPre){Object.assign(S,P);syn();$('trans').value=S.trans}}$('auto').hidden=$('autoh').hidden=k!='g4a';[...lays.children].forEach(x=>x.classList.toggle('on',x.dataset.k==k));ui()};
+  b.onclick=()=>{S.lay=k;sel=0;{const P=LAY[k][2];if(!noPre){S.pano=0;if(P){Object.assign(S,P);syn();$('trans').value=S.trans}fit()}}$('auto').hidden=$('autoh').hidden=k!='g4a';[...lays.children].forEach(x=>x.classList.toggle('on',x.dataset.k==k));ui()};
   lays.appendChild(b);
 });
 lays.firstChild.classList.add('on');
@@ -338,7 +347,7 @@ cv.onpointermove=e=>{
   drag.x=x;drag.y=y;
 };
 cv.onpointerup=()=>{
-  if(drag&&drag.sw&&drag.over>=0){const a=drag.from,b=drag.over;[cells[a],cells[b]]=[cells[b],cells[a]];sel=b;ui()}
+  if(drag&&drag.sw&&drag.over>=0){const a=drag.from,b=drag.over;{const ga=cells[a].g,gb=cells[b].g;[cells[a],cells[b]]=[cells[b],cells[a]];cells[a].g=ga;cells[b].g=gb}sel=b;ui()}
   drag=null;
 };
 cv.onpointercancel=()=>{drag=null};
@@ -370,29 +379,36 @@ $('frb').onclick=()=>$('frf').click();
 $('frf').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(f)FR=await loadImg(f)};
 $('frx').onclick=()=>FR=null;
 const dl=(b,n)=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000)};
-$('png').onclick=()=>{exporting=true;draw(T);cv.toBlob(b=>{dl(b,'kolase.png');exporting=false})};
+async function shot(name,t){
+  exporting=true;draw(t);const n=S.pano>1?S.pano:0;
+  if(n){for(let k=0;k<n;k++){const c=document.createElement('canvas');c.width=S.bw;c.height=S.bh;c.getContext('2d').drawImage(cv,k*S.bw,0,S.bw,S.bh,0,0,S.bw,S.bh);dl(await toBlob(c,'image/png'),name+'-'+(k+1)+'.png');await wait(300)}}
+  else dl(await toBlob(cv,'image/png'),name+'.png');
+  exporting=false;
+}
+$('png').onclick=()=>shot('kolase',T);
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
-function record(name){return new Promise(res=>{
-  const d=duration(),vs=cv.captureStream(30),A=startMusic(d);
+function record(name,k){return new Promise(res=>{
+  const d=duration(),vs=(k==null?cv:(outc.width=S.bw,outc.height=S.bh,SL=k,outc)).captureStream(30),A=startMusic(d);
   if(A)A.dest.stream.getAudioTracks().forEach(t=>vs.addTrack(t));
   const mime=(A?['video/mp4;codecs=avc1,mp4a.40.2','video/mp4','video/webm;codecs=vp9,opus','video/webm']:['video/mp4;codecs=avc1','video/webm;codecs=vp9','video/webm']).find(m=>MediaRecorder.isTypeSupported(m));
   const rec=new MediaRecorder(vs,{mimeType:mime,videoBitsPerSecond:8e6}),ch=[];
   exporting=true;t0=performance.now();
   rec.ondataavailable=e=>ch.push(e.data);
-  rec.onstop=()=>{exporting=false;if(A)A.stop();dl(new Blob(ch,{type:mime}),name+'.'+(mime.includes('mp4')?'mp4':'webm'));res()};
+  rec.onstop=()=>{exporting=false;SL=null;if(A)A.stop();dl(new Blob(ch,{type:mime}),name+'.'+(mime.includes('mp4')?'mp4':'webm'));res()};
   rec.start();if(A)A.go();setTimeout(()=>rec.stop(),d*1000+200);
 })}
+async function recSlide(name){const n=S.pano>1?S.pano:0;if(n){for(let k=0;k<n;k++){await record(name+'-'+(k+1),k);await wait(400)}}else await record(name)}
 const okRec=()=>window.MediaRecorder?true:($('st').textContent='Browser ini belum mendukung perekaman. Coba Chrome.',false);
 const nn=i=>String(i+1).padStart(2,'0');
-$('vid').onclick=async()=>{if(!okRec())return;$('st').textContent='Merekam '+duration().toFixed(1)+' detik. Jangan tutup tab ini.';await record('kolase');$('st').textContent='Video selesai diunduh.'};
+$('vid').onclick=async()=>{if(!okRec())return;$('st').textContent='Merekam '+duration().toFixed(1)+' detik. Jangan tutup tab ini.';await recSlide('kolase');$('st').textContent='Video selesai diunduh.'};
 $('vidall').onclick=async()=>{
   if(!okRec())return;slides[cur]=snap();const keep=cur;
-  for(let i=0;i<slides.length;i++){load(i);$('st').textContent='Merekam slide '+(i+1)+' dari '+slides.length+'. Jangan tutup tab ini.';await wait(300);await record('kolase-'+nn(i));await wait(500)}
+  for(let i=0;i<slides.length;i++){load(i);$('st').textContent='Merekam slide '+(i+1)+' dari '+slides.length+'. Jangan tutup tab ini.';await wait(300);await recSlide('kolase-'+nn(i));await wait(500)}
   load(keep);$('st').textContent='Semua video selesai diunduh.';
 };
 $('pngall').onclick=async()=>{
   slides[cur]=snap();const keep=cur;exporting=true;
-  for(let i=0;i<slides.length;i++){load(i);draw(0);await new Promise(r=>cv.toBlob(b=>{dl(b,'kolase-'+nn(i)+'.png');r()}));await wait(350)}
+  for(let i=0;i<slides.length;i++){load(i);await shot('kolase-'+nn(i),0);await wait(350)}
   exporting=false;load(keep);$('st').textContent='Semua PNG selesai diunduh.';
 };
 
@@ -404,11 +420,11 @@ function bar(){const b=$('sbar');b.innerHTML='';slides.forEach((_,i)=>{const e=d
 function load(i){
   cur=i;const o=slides[i];K.forEach(k=>S[k]=o[k]);cells=o.cells;sel=0;
   syn();
-  noPre=1;lays.querySelector('[data-k="'+S.lay+'"]').click();noPre=0;bar();ui();
+  noPre=1;lays.querySelector('[data-k="'+S.lay+'"]').click();noPre=0;fit();bar();ui();
 }
 function go(i){slides[cur]=snap();load(i)}
 $('sadd').onclick=()=>{slides[cur]=snap();slides.push({...snap(),cells:newCells()});load(slides.length-1)};
-$('sdup').onclick=()=>{slides[cur]=snap();const o=slides[cur];slides.splice(cur+1,0,{...o,cells:o.cells.map(c=>({...c,imgs:[...c.imgs]}))});load(cur+1)};
+$('sdup').onclick=()=>{slides[cur]=snap();const o=slides[cur];slides.splice(cur+1,0,{...o,cells:o.cells.map(c=>({...c,g:c.g&&{...c.g},imgs:[...c.imgs]}))});load(cur+1)};
 $('sdel').onclick=()=>{if(slides.length<2)return;slides.splice(cur,1);load(Math.min(cur,slides.length-1))};
 const mv=d=>{const j=cur+d;if(j<0||j>=slides.length)return;slides[cur]=snap();[slides[cur],slides[j]]=[slides[j],slides[cur]];cur=j;bar()};
 $('sl').onclick=()=>mv(-1);$('sr').onclick=()=>mv(1);
@@ -416,6 +432,8 @@ $('sdemo').onclick=()=>{
   if(slides.some(o=>o.cells.some(c=>c.imgs.length))||cells.some(c=>c.imgs.length)){if(!confirm('Ganti semua slide dengan susunan contoh? Foto yang sudah diunggah akan hilang.'))return}
   slides[cur]=snap();const b=slides[cur];slides=['tiles6','stag2','ticket','stamp2','spread','half','overlap','stamp1'].map(k=>({...b,...(LAY[k][2]||{}),lay:k,cells:newCells()}));load(0);
 };
+['dx','dy','dw','dh'].forEach(k=>{$('g'+k).oninput=e=>{const c=cells[sel],g=c.g||(c.g={dx:0,dy:0,dw:0,dh:0});g[k]=+e.target.value}});
+$('greset').onclick=()=>{delete cells[sel].g;ui()};
 /* musik latar */
 let AC=null,MUS=null,pv=null;
 const AX=()=>AC||(AC=new (window.AudioContext||window.webkitAudioContext)());
@@ -500,10 +518,10 @@ const toCanvas=async b=>{const i=await createImageBitmap(b),c=document.createEle
 $('psave').onclick=async()=>{
   try{
     $('st').textContent='Menyimpan proyek…';slides[cur]=snap();
-    const P={cur,w:cv.width,h:cv.height,S:{fall:!!S.fall,fade:!!S.fade},music:MUS?MUS.blob:null,m:MUS?{a:MUS.a,b:MUS.b,n:MUS.name}:null,slides:[],bg:BG?await toBlob(BG,'image/jpeg',.9):null,fr:FR?await toBlob(FR,'image/png'):null};
+    const P={cur,w:S.bw,h:S.bh,S:{fall:!!S.fall,fade:!!S.fade},music:MUS?MUS.blob:null,m:MUS?{a:MUS.a,b:MUS.b,n:MUS.name}:null,slides:[],bg:BG?await toBlob(BG,'image/jpeg',.9):null,fr:FR?await toBlob(FR,'image/png'):null};
     G.forEach(k=>P.S[k]=S[k]);
     for(const o of slides){const q={cells:[]};K.forEach(k=>q[k]=o[k]);
-      for(const c of o.cells)q.cells.push({zoom:c.zoom,ox:c.ox,oy:c.oy,imgs:await Promise.all(c.imgs.map(i=>toBlob(i,'image/jpeg',.92)))});
+      for(const c of o.cells)q.cells.push({zoom:c.zoom,ox:c.ox,oy:c.oy,g:c.g,imgs:await Promise.all(c.imgs.map(i=>toBlob(i,'image/jpeg',.92)))});
       P.slides.push(q)}
     await kv('put','proyek',P);$('st').textContent='Proyek tersimpan di perangkat ini.';
   }catch(e){$('st').textContent='Gagal menyimpan: penyimpanan perangkat mungkin penuh.'}
@@ -514,12 +532,12 @@ $('pload').onclick=async()=>{
     $('st').textContent='Membuka proyek…';
     Object.assign(S,P.S);G.forEach(k=>$(k).value=S[k]);$('fall').checked=!!S.fall;$('fade').checked=S.fade!==false;
     const v=P.w+'x'+P.h,o=[...$('size').options].find(x=>x.value==v);
-    $('size').value=o?v:'c';$('cust').hidden=!!o;$('cw').value=P.w;$('ch').value=P.h;cv.width=P.w;cv.height=P.h;
+    $('size').value=o?v:'c';$('cust').hidden=!!o;$('cw').value=P.w;$('ch').value=P.h;S.bw=P.w;S.bh=P.h;
     if(P.music)await setMusic(P.music,P.m,P.m&&P.m.n);else clearMusic();
     BG=P.bg?await toCanvas(P.bg):null;FR=P.fr?await toCanvas(P.fr):null;
     slides=[];
     for(const q of P.slides){const o={cells:newCells()};K.forEach(k=>o[k]=q[k]);
-      for(let i=0;i<q.cells.length&&i<9;i++){const c=q.cells[i];Object.assign(o.cells[i],{zoom:c.zoom,ox:c.ox,oy:c.oy,imgs:await Promise.all(c.imgs.map(toCanvas))})}
+      for(let i=0;i<q.cells.length&&i<9;i++){const c=q.cells[i];Object.assign(o.cells[i],{zoom:c.zoom,ox:c.ox,oy:c.oy,g:c.g,imgs:await Promise.all(c.imgs.map(toCanvas))})}
       slides.push(o)}
     load(Math.min(P.cur,slides.length-1));$('st').textContent='Proyek dibuka.';
   }catch(e){$('st').textContent='Gagal membuka proyek tersimpan.'}
