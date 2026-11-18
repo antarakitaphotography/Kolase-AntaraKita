@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#18201b">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Poppins:wght@500;600&family=Dancing+Script:wght@500&family=Cormorant+Garamond:wght@500;600&family=Jost:wght@400;500&family=Playfair+Display:wght@500&family=Montserrat:wght@500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Bodoni+Moda:wght@400;500;600&family=EB+Garamond:wght@400;500&family=Poppins:wght@500;600&family=Dancing+Script:wght@500&family=Cormorant+Garamond:wght@500;600&family=Jost:wght@400;500&family=Playfair+Display:wght@500&family=Montserrat:wght@500&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#101612;--pn:#18201b;--ln:#2a352d;--tx:#e9e5d8;--mu:#8f9b91;--ac:#c9b27c}
 *{box-sizing:border-box}
@@ -44,11 +44,12 @@ label{display:block;color:var(--mu);font-size:12.5px;margin:4px 0}
 <div class="row"><button id="sadd">+ Slide</button><button id="sdup">Duplikat</button><button id="sdel">Hapus</button></div>
 <div class="row"><button id="sl">Pindah ←</button><button id="sr">Pindah →</button></div>
 <button id="sdemo">Isi susunan contoh 8 slide</button>
-<p class="h">Tiap slide punya template, foto, teks, warna latar, dan gaya bingkai sendiri. Font, animasi, dan ukuran berlaku untuk semua slide.</p>
+<p class="h">Tiap slide punya template, foto, teks, font, warna latar, dan gaya bingkai sendiri. Animasi dan ukuran berlaku untuk semua slide.</p>
 
 <h3>Ukuran</h3>
 <select id="size">
 <option value="1080x1350">Instagram post 4:5 (1080×1350)</option>
+<option value="1080x1440">Instagram post 3:4 (1080×1440)</option>
 <option value="1080x1920">TikTok / Reels / Story 9:16</option>
 <option value="1080x1080">Persegi 1:1</option>
 <option value="1920x1080">Landscape 16:9</option>
@@ -73,15 +74,17 @@ label{display:block;color:var(--mu);font-size:12.5px;margin:4px 0}
 <p class="h">Tanpa dicentang, bingkai hanya muncul di template Bingkai dan Trio.</p>
 
 <h3>Teks</h3>
-<input id="title" placeholder="Judul">
+<input id="title" placeholder="Judul (pakai | untuk baris baru)">
 <input id="sub" placeholder="Tanggal / keterangan">
 <input id="foot" placeholder="Kredit foto">
-<input id="quote" placeholder="Kutipan (kotak teks)">
+<input id="quote" placeholder="Kutipan / paragraf (| = baris baru)">
+<input id="quote2" placeholder="Paragraf kedua (opsional)">
 <input id="wl" placeholder="Kata kolom kiri, pisahkan dengan |">
 <input id="wr" placeholder="Kata kolom kanan, pisahkan dengan |">
-<select id="font">
-<option>Cinzel</option><option>Cormorant Garamond</option><option>Playfair Display</option><option>Montserrat</option><option>Poppins</option><option>Jost</option>
-</select>
+<label>Font judul<select id="font"></select></label>
+<label>Font teks lain (tanggal, kredit, kolom)<select id="bfont"></select></label>
+<label>Font kutipan dan paragraf<select id="qfont"></select></label>
+<label>Jarak huruf<input id="ls" type="range" min="0" max=".3" step=".01"></label>
 <label>Ukuran teks<input id="ts" type="range" min=".6" max="1.6" step=".05"></label>
 
 <h3>Warna</h3>
@@ -142,10 +145,10 @@ label{display:block;color:var(--mu);font-size:12.5px;margin:4px 0}
 <script>
 const $=i=>document.getElementById(i),cv=$('cv'),oc=document.createElement('canvas'),outc=document.createElement('canvas'),octx=outc.getContext('2d');
 let SL=null,ctx=cv.getContext('2d');
-const S={lay:'oval',title:'SINTA & MUKHLAS',sub:'',foot:'PHOTO BY ANTARA KITA',font:'Cinzel',ts:1,bg:'#25402f',txt:'#f1ece0',ac:'#c9b27c',trans:'rand',hold:1.8,tdur:.55,stag:.35,dur:0,vol:1,fade:true,bw:1080,bh:1350,pano:0,quote:'Two souls, one timeless story.',wl:'a story|by|Antara Kita',wr:'the|moment|S & M',shape:'oval',bstyle:'scallop',fc:'#ecebe6',fw:.06,dim:.25,fz:1.25};
+const S={lay:'oval',title:'SINTA & MUKHLAS',sub:'',foot:'PHOTO BY ANTARA KITA',font:'Cinzel',ts:1,bg:'#25402f',txt:'#f1ece0',ac:'#c9b27c',trans:'rand',hold:1.8,tdur:.55,stag:.35,dur:0,vol:1,fade:true,bw:1080,bh:1350,pano:0,bfont:'Jost',qfont:'Dancing Script',quote2:'',ls:.14,quote:'Two souls, one timeless story.',wl:'a story|by|Antara Kita',wr:'the|moment|S & M',shape:'oval',bstyle:'scallop',fc:'#ecebe6',fw:.06,dim:.25,fz:1.25};
 let noPre=0,slides=[],cur=0,BG=null,FR=null,cells=Array.from({length:9},()=>({imgs:[],zoom:1,ox:0,oy:0})),sel=0,exporting=false,t0=performance.now(),T=0,R=[],drag=null,spread=false;
 
-const K=['lay','title','sub','foot','quote','wl','wr','shape','bstyle','fc','fw','bg','txt','pano'];
+const K=['lay','title','sub','foot','quote','wl','wr','shape','bstyle','fc','fw','bg','txt','pano','font','bfont','qfont','quote2','ls'];
 const syn=()=>K.forEach(k=>{const e=$(k);if(e)e.value=S[k]});
 const QC={1:['#f6f2ec','#1b2a4a'],2:['#a73a14','#f6f2ec'],3:['#efe6d8','#8c1f12']};
 const grid=(c,r,x,y,W,H,g)=>{const cw=(W-g*(c-1))/c,ch=(H-g*(r-1))/r,o=[];for(let j=0;j<r;j++)for(let i=0;i<c;i++)o.push({x:x+i*(cw+g),y:y+j*(ch+g),w:cw,h:ch});return o};
@@ -174,37 +177,45 @@ overlap:['Tumpuk',(w,h)=>({d:[[0,0,w,h*.5,'#ede4db']],c:[{x:0,y:h*.5,w,h:h*.5},{
 stamp1:['Perangko 1',(w,h)=>({d:[[0,0,w*.5,h,'#0b0b0b'],[w*.5,0,w*.5,h,'bg']],c:[{x:w*.287,y:h*.267,w:w*.437,h:h*.52,f:1}],t:[]}),{shape:'rect',bstyle:'stamp',fc:'#f3f1ed',fw:.14,bg:'#10224d'}],
 reel3:['Reel 3 kolom',(w,h)=>({c:grid(3,1,0,0,w,h,w*.012),t:[]}),{trans:'reel',bg:'#0a0a0a'}],
 sam2:['Sambung 2 slide',(w,h)=>{const u=w/2,P=(i,x,y,a,b)=>({x:(i+x)*u,y:y*h,w:a*u,h:b*h});return{c:[P(0,.013,.289,.173,.194),P(0,.198,.155,.603,.18),P(0,.198,.344,.603,.5),P(0,.814,.221,.46,.241),P(1,0,.5,.4,.35),P(1,.54,.39,.445,.33),P(1,.765,.79,.22,.18)],t:[['title',u*.115,h*.7,.045,h*.42,Math.PI/2]]}},{bg:'#fffcf6',txt:'#1c1c1c',pano:2}],
-sam3:['Sambung 3 slide',(w,h)=>{const u=w/3,P=(i,x,y,a,b)=>({x:(i+x)*u,y:y*h,w:a*u,h:b*h});return{c:[P(0,.013,.289,.173,.194),P(0,.198,.155,.603,.18),P(0,.198,.344,.603,.5),P(0,.814,.221,.46,.241),P(1,0,.5,.4,.35),P(1,.38,.1,.5,.36),P(1,.76,.56,.5,.3),P(2,.34,.12,.5,.33),P(2,.34,.47,.5,.38)],t:[['title',u*.115,h*.7,.045,h*.42,Math.PI/2]]}},{bg:'#fffcf6',txt:'#1c1c1c',pano:3}]
+sam3:['Sambung 3 slide',(w,h)=>{const u=w/3,P=(i,x,y,a,b)=>({x:(i+x)*u,y:y*h,w:a*u,h:b*h});return{c:[P(0,.013,.289,.173,.194),P(0,.198,.155,.603,.18),P(0,.198,.344,.603,.5),P(0,.814,.221,.46,.241),P(1,0,.5,.4,.35),P(1,.38,.1,.5,.36),P(1,.76,.56,.5,.3),P(2,.34,.12,.5,.33),P(2,.34,.47,.5,.38)],t:[['title',u*.115,h*.7,.045,h*.42,Math.PI/2]]}},{bg:'#fffcf6',txt:'#1c1c1c',pano:3}],
+noir:['Bingkai hitam',(w,h)=>({c:[{x:w*.207,y:h*.129,w:w*.586,h:h*.658,f:1}],t:[],qp:[[w*.5,h*.838,w*.58,w*.0185,S.txt,'center',1]]}),{shape:'rect',bstyle:'solid',fc:'#ffffff',fw:.008,bg:'#000000',txt:'#ffffff',font:'Bodoni Moda',bfont:'EB Garamond',qfont:'EB Garamond',ls:0}],
+edit6:['Editorial 6',(w,h)=>({d:[[w*.368,h*.077,w*.26,h*.004,'txt'],[w*.368,h*.925,w*.26,h*.004,'txt']],c:grid(3,2,w*.131,h*.157,w*.738,h*.543,w*.0105),t:[['title',w/2,h*.775,.058,w*.6,0,'center','font']],qp:[[w*.082,h*.808,w*.84,w*.0175,S.txt,'left',1]]}),{bg:'#ffffff',txt:'#0a0a0a',font:'Bodoni Moda',bfont:'EB Garamond',qfont:'EB Garamond',ls:0}],
+poster:['Poster teks',(w,h)=>({c:[{x:0,y:0,w,h}],t:[['title',w*.095,h*.145,.062,w*.7,0,'left','font',S.txt],['sub',w*.79,h*.125,.03,w*.2,0,'left','font',S.txt],['foot',w*.095,h*.9,.052,w*.4,0,'left','font',S.txt]],qp:[[w*.095,h*.235,w*.48,w*.0135,S.txt,'left',1]]}),{bg:'#000000',txt:'#ffffff',font:'Bodoni Moda',bfont:'EB Garamond',qfont:'EB Garamond',ls:0}],
+ruang:['Ruang teks',(w,h)=>{const pw=w*.246,ph=h*.276,P=(x,y)=>({x:w*x,y:h*y,w:pw,h:ph});return{c:[P(.456,.072),P(.716,.072),P(.085,.363),P(.345,.363),P(.457,.654),P(.719,.654)],t:[['sub',w*.245,h*.075,.0115,w*.35,0,'center','bfont',S.txt],['title',w*.245,h*.19,.03,w*.4,0,'center','font',S.txt],['foot',w*.245,h*.295,.0105,w*.35,0,'center','bfont',S.txt]],qp:[[w*.8,h*.5,w*.27,w*.0112,S.txt,'center',0],[w*.25,h*.83,w*.3,w*.0112,S.txt,'center',0,2]]}},{bg:'#2a0000',txt:'#f6ece6',font:'Bodoni Moda',bfont:'EB Garamond',qfont:'EB Garamond',ls:0}],
+hijau:['Dua foto + kutipan',(w,h)=>({d:[[w*.3,h*.852,w*.405,h*.0012,'txt']],c:[{x:w*.08,y:h*.269,w:w*.411,h:h*.462},{x:w*.51,y:h*.269,w:w*.411,h:h*.462}],t:[['title',w/2,h*.812,.058,w*.6,0,'center','font']],qp:[[w*.5,h*.868,w*.62,w*.0175,S.txt,'center',1]]}),{bg:'#3e4a31',txt:'#f4f1ea',font:'Bodoni Moda',bfont:'EB Garamond',qfont:'EB Garamond',ls:0}]
 };
 
 LAY.g4a=['Slideshow 4',LAY.g4[1]];
 const TR=['fade','slide','up','zoom','wipe','left','down','zoomout','wipev','reel'];
 const ease=p=>p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
 
-function tx(k,x,y,f,mw,rot){
+function tx(k,x,y,f,mw,rot,al,fk,col){
   const s=S[k];if(!s)return;mw=mw||S.bw*.9;
-  let fs=f*S.ts*S.bw;const fam=k=='title'?S.font:'Jost';
-  const set=()=>{ctx.font=(k=='title'?'':'500 ')+fs+'px "'+fam+'",serif';ctx.letterSpacing=(fs*.14)+'px'};
-  set();while(ctx.measureText(s).width>mw&&fs>8){fs-=2;set()}
-  ctx.fillStyle=k=='title'?S.txt:S.ac;ctx.textAlign='center';ctx.textBaseline='middle';if(rot){ctx.save();ctx.translate(x,y);ctx.rotate(rot);ctx.fillText(s,0,0);ctx.restore()}else ctx.fillText(s,x,y);
+  let fs=f*S.ts*S.bw;const fam=S[fk||(k=='title'?'font':'bfont')],Ls=s.split('|'),hv=k=='title'||fk=='font';
+  const set=()=>{ctx.font=(hv?'':'500 ')+fs+'px "'+fam+'",serif';ctx.letterSpacing=(fs*S.ls)+'px'};
+  const wid=()=>Math.max(...Ls.map(l=>ctx.measureText(l).width));
+  set();while(wid()>mw&&fs>8){fs-=2;set()}
+  ctx.fillStyle=col||(k=='title'?S.txt:S.ac);ctx.textAlign=al||'center';ctx.textBaseline='middle';
+  const lh=fs*1.08,y0=-(Ls.length-1)*lh/2;
+  ctx.save();ctx.translate(x,y);if(rot)ctx.rotate(rot);Ls.forEach((l,i)=>ctx.fillText(l,0,y0+i*lh));ctx.restore();
 }
 
 function dec(a){
-  const[x,y,w,h,c,k]=a;ctx.fillStyle=c=='bg'?S.bg:c;ctx.beginPath();
+  const[x,y,w,h,c,k]=a;ctx.fillStyle=c=='bg'?S.bg:c=='txt'?S.txt:c;ctx.beginPath();
   if(k=='tk'){const rr=w*.045,f=y+h*.82;ctx.moveTo(x,y);ctx.lineTo(x+w,y);ctx.lineTo(x+w,f-rr);ctx.arc(x+w,f,rr,-1.5708,1.5708,true);ctx.lineTo(x+w,y+h);ctx.lineTo(x,y+h);ctx.lineTo(x,f+rr);ctx.arc(x,f,rr,1.5708,-1.5708,true);ctx.closePath()}
   else ctx.rect(x,y,w,h);
   ctx.fill();
 }
 function lst(k,x0,y0,x1,y1,f,al,col){
   const a=(S[k]||'').split('|').map(z=>z.trim()).filter(Boolean),n=a.length;if(!n)return;
-  ctx.font='500 '+f*S.bw+'px Jost,sans-serif';ctx.letterSpacing='0px';ctx.fillStyle=col||S.txt;ctx.textAlign=al||'center';ctx.textBaseline='middle';
+  ctx.font='500 '+f*S.bw+'px "'+S.bfont+'",serif';ctx.letterSpacing='0px';ctx.fillStyle=col||S.txt;ctx.textAlign=al||'center';ctx.textBaseline='middle';
   a.forEach((z,i)=>{const q=n>1?i/(n-1):.5;ctx.fillText(z,x0+(x1-x0)*q,y0+(y1-y0)*q)});
 }
-function qtx(x,y,mw,fs,col,al,top){
-  const s=S.quote;if(!s)return;
-  ctx.font='500 '+fs+'px "Dancing Script",cursive';ctx.letterSpacing='0px';
-  const L=[];let cu='';
-  s.split(' ').forEach(wd=>{const t=cu?cu+' '+wd:wd;if(ctx.measureText(t).width>mw&&cu){L.push(cu);cu=wd}else cu=t});L.push(cu);
+function qtx(x,y,mw,fs,col,al,top,n){
+  const s=n==2?S.quote2:S.quote;if(!s)return;
+  ctx.font='500 '+fs+'px "'+S.qfont+'",serif';ctx.letterSpacing='0px';
+  const L=[];
+  s.split('|').forEach(seg=>{let cu='';seg.split(' ').forEach(wd=>{const t=cu?cu+' '+wd:wd;if(ctx.measureText(t).width>mw&&cu){L.push(cu);cu=wd}else cu=t});L.push(cu)});
   const lh=fs*1.15,y0=top?y:y-(L.length-1)*lh/2;
   ctx.fillStyle=col;ctx.textAlign=al;ctx.textBaseline='middle';L.forEach((l,i)=>ctx.fillText(l,x,y0+i*lh));
 }
@@ -318,8 +329,10 @@ $('size').onchange=e=>{
   if(v!='c'){const[a,b]=v.split('x');setSize(+a,+b)}
 };
 ['cw','ch'].forEach(k=>$(k).oninput=()=>{const a=+$('cw').value,b=+$('ch').value;if(a>=200&&b>=200&&a<=4000&&b<=4000)setSize(a,b)});
-['title','sub','foot','font','trans','shape','bstyle','quote','wl','wr'].forEach(k=>{const e=$(k);e.value=S[k];e.oninput=()=>S[k]=e.value});
-['ts','hold','tdur','stag','fw','dim','fz','dur','vol'].forEach(k=>{const e=$(k);e.value=S[k];e.oninput=()=>S[k]=+e.value});
+const FONTS=['Cinzel','Cormorant Garamond','Playfair Display','Bodoni Moda','EB Garamond','Montserrat','Poppins','Jost','Dancing Script'];
+['font','bfont','qfont'].forEach(id=>{$(id).innerHTML=FONTS.map(f=>'<option>'+f+'</option>').join('')});
+['title','sub','foot','font','trans','shape','bstyle','quote','wl','wr','quote2','bfont','qfont'].forEach(k=>{const e=$(k);e.value=S[k];e.oninput=()=>S[k]=e.value});
+['ts','hold','tdur','stag','fw','dim','fz','dur','vol','ls'].forEach(k=>{const e=$(k);e.value=S[k];e.oninput=()=>S[k]=+e.value});
 ['bg','txt','ac','fc'].forEach(k=>{const e=$(k);e.value=S[k];e.oninput=()=>S[k]=e.value});
 $('fall').onchange=e=>S.fall=e.target.checked;
 $('zoom').oninput=e=>cells[sel].zoom=+e.target.value;
@@ -412,13 +425,13 @@ $('pngall').onclick=async()=>{
   exporting=false;load(keep);$('st').textContent='Semua PNG selesai diunduh.';
 };
 
-['Cinzel','Cormorant Garamond','Playfair Display','Montserrat','Jost','Poppins','Dancing Script'].forEach(f=>document.fonts.load('20px "'+f+'"'));
+['Cinzel','Cormorant Garamond','Playfair Display','Montserrat','Jost','Poppins','Dancing Script','Bodoni Moda','EB Garamond'].forEach(f=>document.fonts.load('20px "'+f+'"'));
 /* carousel */
 const newCells=()=>Array.from({length:9},()=>({imgs:[],zoom:1,ox:0,oy:0}));
 const snap=()=>{const o={cells};K.forEach(k=>o[k]=S[k]);return o};
 function bar(){const b=$('sbar');b.innerHTML='';slides.forEach((_,i)=>{const e=document.createElement('button');e.textContent=i+1;e.className=i==cur?'on':'';e.onclick=()=>go(i);b.appendChild(e)})}
 function load(i){
-  cur=i;const o=slides[i];K.forEach(k=>S[k]=o[k]);cells=o.cells;sel=0;
+  cur=i;const o=slides[i];K.forEach(k=>{if(o[k]!==undefined)S[k]=o[k]});cells=o.cells;sel=0;
   syn();
   noPre=1;lays.querySelector('[data-k="'+S.lay+'"]').click();noPre=0;fit();bar();ui();
 }
