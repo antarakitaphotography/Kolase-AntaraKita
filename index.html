@@ -9,6 +9,7 @@
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Bodoni+Moda:wght@400;500;600&family=EB+Garamond:wght@400;500&family=Poppins:wght@500;600&family=Dancing+Script:wght@500&family=Cormorant+Garamond:wght@500;600&family=Jost:wght@400;500&family=Playfair+Display:wght@500&family=Montserrat:wght@500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville&family=Lora&family=Libre+Caslon+Text&family=Cormorant&family=Marcellus&family=Prata&family=DM+Serif+Display&family=Playfair+Display+SC&family=Great+Vibes&family=Allura&family=Pinyon+Script&family=Parisienne&family=Sacramento&family=Alex+Brush&family=Mrs+Saint+Delafield&family=Italianno&family=Satisfy&family=Raleway:wght@400;500&family=Lato:wght@400;700&family=Josefin+Sans:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#101612;--pn:#18201b;--ln:#2a352d;--tx:#e9e5d8;--mu:#8f9b91;--ac:#c9b27c}
 *{box-sizing:border-box}
@@ -84,6 +85,9 @@ label{display:block;color:var(--mu);font-size:12.5px;margin:4px 0}
 <label>Font judul<select id="font"></select></label>
 <label>Font teks lain (tanggal, kredit, kolom)<select id="bfont"></select></label>
 <label>Font kutipan dan paragraf<select id="qfont"></select></label>
+<button id="fadd">Impor font sendiri (.ttf / .otf / .woff)</button>
+<input id="ffile" type="file" accept=".ttf,.otf,.woff,.woff2,font/*" multiple hidden>
+<p class="h" id="fmsg">Font yang diimpor tersimpan di perangkat ini dan ikut tersimpan di proyek.</p>
 <label>Jarak huruf<input id="ls" type="range" min="0" max=".3" step=".01"></label>
 <label>Ukuran teks<input id="ts" type="range" min=".6" max="1.6" step=".05"></label>
 
@@ -149,7 +153,7 @@ const S={lay:'oval',title:'SINTA & MUKHLAS',sub:'',foot:'PHOTO BY ANTARA KITA',f
 let noPre=0,slides=[],cur=0,BG=null,FR=null,cells=Array.from({length:9},()=>({imgs:[],zoom:1,ox:0,oy:0})),sel=0,exporting=false,t0=performance.now(),T=0,R=[],drag=null,spread=false;
 
 const K=['lay','title','sub','foot','quote','wl','wr','shape','bstyle','fc','fw','bg','txt','pano','font','bfont','qfont','quote2','ls'];
-const syn=()=>K.forEach(k=>{const e=$(k);if(e)e.value=S[k]});
+const syn=()=>{K.forEach(k=>{const e=$(k);if(e)e.value=S[k]});['font','bfont','qfont'].forEach(k=>document.fonts.load('20px "'+S[k]+'"'))};
 const QC={1:['#f6f2ec','#1b2a4a'],2:['#a73a14','#f6f2ec'],3:['#efe6d8','#8c1f12']};
 const grid=(c,r,x,y,W,H,g)=>{const cw=(W-g*(c-1))/c,ch=(H-g*(r-1))/r,o=[];for(let j=0;j<r;j++)for(let i=0;i<c;i++)o.push({x:x+i*(cw+g),y:y+j*(ch+g),w:cw,h:ch});return o};
 const std=(w,h)=>[['title',w/2,h*.045,.032],['foot',w/2,h*.965,.02]];
@@ -329,8 +333,13 @@ $('size').onchange=e=>{
   if(v!='c'){const[a,b]=v.split('x');setSize(+a,+b)}
 };
 ['cw','ch'].forEach(k=>$(k).oninput=()=>{const a=+$('cw').value,b=+$('ch').value;if(a>=200&&b>=200&&a<=4000&&b<=4000)setSize(a,b)});
-const FONTS=['Cinzel','Cormorant Garamond','Playfair Display','Bodoni Moda','EB Garamond','Montserrat','Poppins','Jost','Dancing Script'];
-['font','bfont','qfont'].forEach(id=>{$(id).innerHTML=FONTS.map(f=>'<option>'+f+'</option>').join('')});
+const FG={'Serif klasik':['Bodoni Moda','EB Garamond','Cormorant Garamond','Cormorant','Playfair Display','Playfair Display SC','Libre Baskerville','Libre Caslon Text','Lora','Prata','Marcellus','DM Serif Display','Cinzel'],'Tulisan tangan':['Dancing Script','Great Vibes','Allura','Pinyon Script','Parisienne','Sacramento','Alex Brush','Mrs Saint Delafield','Italianno','Satisfy'],'Sans modern':['Jost','Poppins','Montserrat','Raleway','Lato','Josefin Sans']};
+const FONTS=Object.values(FG).flat();
+const fopt=f=>'<option style="font-family:\''+f+'\',serif">'+f+'</option>';
+['font','bfont','qfont'].forEach(id=>{
+  $(id).innerHTML=Object.entries(FG).map(([g,a])=>'<optgroup label="'+g+'">'+a.map(fopt).join('')+'</optgroup>').join('');
+  $(id).addEventListener('change',e=>document.fonts.load('40px "'+e.target.value+'"'));
+});
 ['title','sub','foot','font','trans','shape','bstyle','quote','wl','wr','quote2','bfont','qfont'].forEach(k=>{const e=$(k);e.value=S[k];e.oninput=()=>S[k]=e.value});
 ['ts','hold','tdur','stag','fw','dim','fz','dur','vol','ls'].forEach(k=>{const e=$(k);e.value=S[k];e.oninput=()=>S[k]=+e.value});
 ['bg','txt','ac','fc'].forEach(k=>{const e=$(k);e.value=S[k];e.oninput=()=>S[k]=e.value});
@@ -522,6 +531,34 @@ $('mprev').onclick=()=>{
 };
 drawWF();
 
+/* font sendiri */
+const CF=[];
+async function addFont(name,blob,save){
+  const ff=new FontFace(name,await blob.arrayBuffer());await ff.load();document.fonts.add(ff);
+  if(!FONTS.includes(name)){
+    FONTS.push(name);
+    ['font','bfont','qfont'].forEach(id=>{
+      const sel=$(id);let g=sel.querySelector('optgroup[label="Font impor"]');
+      if(!g){g=document.createElement('optgroup');g.label='Font impor';sel.appendChild(g)}
+      const o=document.createElement('option');o.textContent=name;o.style.fontFamily='"'+name+'",serif';g.appendChild(o);
+    });
+  }
+  if(!CF.find(c=>c.name==name))CF.push({name,blob});
+  if(save)await kv('put','fonts',CF);
+}
+$('fadd').onclick=()=>$('ffile').click();
+$('ffile').onchange=async e=>{
+  const fs=[...e.target.files];e.target.value='';
+  for(const f of fs){
+    try{
+      let n=f.name.replace(/\.[^.]+$/,'').replace(/["']/g,'').trim()||'Font';
+      if(FONTS.includes(n)&&!CF.find(c=>c.name==n))n+=' (impor)';
+      await addFont(n,f,true);S.font=n;$('font').value=n;
+      $('fmsg').textContent='Font "'+n+'" ditambahkan dan dipakai sebagai font judul. Pilih di Font teks lain atau Font kutipan untuk teks lainnya.';
+    }catch(err){$('fmsg').textContent='Font tidak bisa dibaca. Coba file .ttf, .otf, atau .woff.'}
+  }
+};
+
 /* penyimpanan lokal (IndexedDB) */
 const G=['font','ts','ac','trans','hold','tdur','stag','dim','fz','dur','vol'];
 const DB=()=>new Promise((ok,no)=>{const q=indexedDB.open('kolase',1);q.onupgradeneeded=()=>q.result.createObjectStore('kv');q.onsuccess=()=>ok(q.result);q.onerror=()=>no(q.error)});
@@ -531,7 +568,7 @@ const toCanvas=async b=>{const i=await createImageBitmap(b),c=document.createEle
 $('psave').onclick=async()=>{
   try{
     $('st').textContent='Menyimpan proyek…';slides[cur]=snap();
-    const P={cur,w:S.bw,h:S.bh,S:{fall:!!S.fall,fade:!!S.fade},music:MUS?MUS.blob:null,m:MUS?{a:MUS.a,b:MUS.b,n:MUS.name}:null,slides:[],bg:BG?await toBlob(BG,'image/jpeg',.9):null,fr:FR?await toBlob(FR,'image/png'):null};
+    const P={cur,w:S.bw,h:S.bh,S:{fall:!!S.fall,fade:!!S.fade},fonts:CF,music:MUS?MUS.blob:null,m:MUS?{a:MUS.a,b:MUS.b,n:MUS.name}:null,slides:[],bg:BG?await toBlob(BG,'image/jpeg',.9):null,fr:FR?await toBlob(FR,'image/png'):null};
     G.forEach(k=>P.S[k]=S[k]);
     for(const o of slides){const q={cells:[]};K.forEach(k=>q[k]=o[k]);
       for(const c of o.cells)q.cells.push({zoom:c.zoom,ox:c.ox,oy:c.oy,g:c.g,imgs:await Promise.all(c.imgs.map(i=>toBlob(i,'image/jpeg',.92)))});
@@ -543,6 +580,7 @@ $('pload').onclick=async()=>{
   try{
     const P=await kv('get','proyek');if(!P){$('st').textContent='Belum ada proyek tersimpan.';return}
     $('st').textContent='Membuka proyek…';
+    for(const c of P.fonts||[])await addFont(c.name,c.blob,true);
     Object.assign(S,P.S);G.forEach(k=>$(k).value=S[k]);$('fall').checked=!!S.fall;$('fade').checked=S.fade!==false;
     const v=P.w+'x'+P.h,o=[...$('size').options].find(x=>x.value==v);
     $('size').value=o?v:'c';$('cust').hidden=!!o;$('cw').value=P.w;$('ch').value=P.h;S.bw=P.w;S.bh=P.h;
@@ -560,6 +598,7 @@ $('pload').onclick=async()=>{
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js');
 if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();
 
+kv('get','fonts').then(a=>(a||[]).forEach(c=>addFont(c.name,c.blob,false).catch(()=>{}))).catch(()=>{});
 slides=[snap()];bar();ui();requestAnimationFrame(loop);
 </script>
 </body>
